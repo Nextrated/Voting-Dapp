@@ -1,9 +1,11 @@
 import './App.css';
 import { Box } from "@chakra-ui/react";
 import Header from "./components/Header";
+import Banner from "./components/banner"
+import Dashboard from "./pages/dashboard";
 import Home from "./pages/home";
 import React, { useEffect, useState } from "react";
-
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 function App() {
   const [currentAccount, setCurrentAccount] = useState ('');
@@ -98,15 +100,22 @@ function App() {
   }, [])
 
   return (
-    <Box minH="100vh" w="100vw">
-        <Header
-          isConnected={isConnected} 
-          currentAccount={currentAccount} 
-          currentNetwork = {currentNetwork}
-          toggleWallet={connectWallet}
-        />
-        <Home/>
-    </Box>
+    <BrowserRouter>
+      <Box minH="100vh" w="100vw">
+          <Header
+            isConnected={isConnected} 
+            currentAccount={currentAccount} 
+            currentNetwork = {currentNetwork}
+            toggleWallet={connectWallet}
+          />
+          <Banner/>
+          <Routes>
+              <Route path="/" element={<Home/>}/>
+              <Route path="/dashboard" element={<Dashboard/>}/>
+              
+          </Routes>
+      </Box>
+    </BrowserRouter>
 
   );
 }

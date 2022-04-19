@@ -4,29 +4,33 @@ import { Box, Text, Image, Button, useColorModeValue} from "@chakra-ui/react"
 const Home = () => {
 	 const [ loading, setLoading ] = useState(false)
 	// const color = useColorModeValue("white", "black")
+	async function redirect(){
+		await window.location.assign("/dashboard")
+	}
 	const handlePolls = () => {
 		setLoading(true);
+		setTimeout(redirect, 3000);		
 	}
     return (
     	loading === false ? (<Box d="flex" flexDirection={{base:"column-reverse", md:"row"}} px={{base:5, md:10}} py={10} mx="auto" justifyContent="space-between">
-	    	    		<Box w={{base:"100%", md:"40%"}} fontSize={{base:"3xl",md:"2xl",lg:"4xl"}} fontWeight="700" mt="50px">
+	    	    		<Box w={{base:"100%", md:"40%"}} fontSize={{base:"3xl",md:"2xl",lg:"4xl"}} fontWeight="700" mt="50px" textAlign={{base:"center", md:"left"}}>
 	    	    			<Text>
-	    		    			Vote for the future of Zuri with <span style={{color:"yellow"}}>ZuriPolls</span>
+	    		    			Vote for the future of Zuri with <span style={{color:"orange"}}>ZuriPolls</span>
 	    		    		</Text>
 	    	    			<Text>
-	    		    			Your Vote translates to your voice and your right to make a choice	
+	    		    			Your vote translates to your voice and your right to make a choice	
 	    		    		</Text>
 	    		    		
-	    		    		<Button bg="yellow" isFullWidth mt={3} size="lg" color="black" onClick={handlePolls}> Go to Polls</Button>
+	    		    		<Button bg="orange" isFullWidth mt={10} size="lg" color="black" onClick={handlePolls}> Go to Polls</Button>
 	    	    		</Box>
 	    	    		<Box w={{base:"100%", md:"50%"}} d="flex" justifyContent="flex-end">
-	    	    			<Image src="hero.svg" htmlHeight="80%" htmlWidth="100%"/>	
+	    	    			<Image src="hero.svg" htmlHeight="80%" htmlWidth="100%" className="hero-img"/>	
 	    	    		</Box>
 	    	   	
 	    	    	</Box>	) : 
 
-    				(<Box w="100%" h="80vh">
-		    			<Image src="vote.gif" htmlHeight="80%" htmlWidth="100%" mx="auto"/>	
+    				(<Box w="100%">
+		    			<Image src="vote.gif" htmlWidth="75%" mx="auto"/>	
 		    		</Box>)
     
         
