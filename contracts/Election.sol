@@ -10,6 +10,9 @@ contract Election {
     address public BoardOfDirectors;
     address public compilers;
 
+    uint256 public showInterest = block.timestamp + 240 seconds;
+
+    bool public completed;
 
     event DelegateChairman (address indexed to);
 
@@ -52,9 +55,25 @@ contract Election {
     //mapping an address to the position they're contesting for
     mapping (address => mapping(string => bool)) public isContesting;
 
-    constructor () {
+    //showInterestExpired modifier
+    modifier showInterestExpired( bool requireExpired ) {
+    uint256 timeRemaining = timeLeft();
+    if( requireExpired ) {
+      require(timeRemaining <= 0, "Show Interest has Expired");
+    } else {
+      require(timeRemaining > 0, "Show Interest has not Expired");
+    }
+    _;
+  }
+
+    //ElectionNotCompleted modifier
+    modifier electionNotCompleted() {
+    require(!completed, "election process already completed");
+    _;
+  }
+
+    constructor() {
         chairman = msg.sender;
-        //BoardOfDirectors = chairman;
     }
 
     modifier onlyChairman() {
@@ -165,7 +184,7 @@ contract Election {
 
 
     //Declare interest for leadership position
-    function showInterest (string memory _name, string memory _positionContesting) public onlyStakeholder returns(uint){
+    function expressInterest (string memory _name, string memory _positionContesting) public showInterestExpired(false) electionNotCompleted onlyStakeholder returns(uint){
         require(isCompiler() == true, "Interest Denied : Unrecognised address, neither board member nor teacher");
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_positionContesting] == false, "You have already shown interest in this position");
@@ -195,7 +214,7 @@ contract Election {
         return(true); 
     }
 
-    function vote(uint _candidateId) public {
+    function vote(uint _candidateId) public showInterestExpired(true) electionNotCompleted {
         //require that they havnt voted before
         require(!voters[msg.sender]);
         
@@ -209,5 +228,15 @@ contract Election {
         candidates[_candidateId].voteCount ++;
     }
 
-    
+function timeLeft() public view returns (uint256) {
+    if( block.timestamp >= showInterest ) {
+      return 0;
+    } else {
+      return showInterest - block.timestamp;
+    }
+     }
+
+      function complete() public {
+    completed = true;
+  }
 }
