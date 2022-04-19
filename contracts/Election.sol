@@ -129,7 +129,7 @@ contract Election {
 
     /// @notice Check for verifying if an address is a teacher or board member
     function compilerCheck(address _addr) public view returns (bool) {
-       if (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Teacher")) || (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Board Member")))) {
+       if (keccak256(abi.encodePacked(stakeholders[_addr].role)) == keccak256(abi.encodePacked("Teacher")) || (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Board Member")))) {
             return true;
         } else {
             return false;
