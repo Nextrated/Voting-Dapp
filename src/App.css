@@ -5,6 +5,10 @@ button:focus{
 html, body{
   overflow-x: hidden;
 }
+
+.card:hover{
+  transform: scale(1.1);
+}
 /*
 .header{
   background: rgba(225,225,225,0.4);
