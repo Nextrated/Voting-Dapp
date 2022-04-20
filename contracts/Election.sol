@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -8,32 +8,33 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Election is ERC20 {
     address public chairman;
-    address public students;
-    address public Teacher;
-    address public BoardOfDirectors;
-    address public compilers;
     
     uint _electionStart;
     uint _electionEnd;
     uint electionDuration;
 
+    uint _showInterestStart;
+    uint _showInterestEnd;
+    uint showInterestDuration;
+
     uint teacherID = 1;
     uint boardMemberID = 0;
     uint studentID = 2;
 
-    uint256 public showInterest = block.timestamp + 240 seconds;
-
+    string[] public voteCategory;
+    mapping (string => bool) public categorySet;
+    mapping (string => uint) public roleEligible;
 
 
     event DelegateChairman (address indexed to);
-    event Voted(address voter);
+    event Voted(address voteChoice, string Category);
 
     //Model a candidate
     struct Candidate {
         uint id;
         string name;
         address contestant;
-        string positionContesting;
+        string category;
         uint voteCount;
     }
     address[] public stakeholderList;
@@ -49,8 +50,8 @@ contract Election is ERC20 {
     struct Vote {
         address voteChoice;
         uint count;
-    }
-    Vote[] public votesss;
+    }   
+
    
 
     mapping(address => uint) public contestant;
@@ -60,7 +61,7 @@ contract Election is ERC20 {
     mapping(address =>  mapping(string => bool)) public voters;
     mapping (address => Vote) public allVotes; 
     address[] public votedFor;
-
+    
 
 
     //Store & Fetch candidates
@@ -85,15 +86,15 @@ contract Election is ERC20 {
     bool canStillExpressInterest = true;
 
     //showInterestExpired modifier
-    modifier showInterestExpired( bool requireExpired ) {
-    uint256 timeRemaining = timeLeft();
-    if( requireExpired ) {
-      require(timeRemaining <= 0, "Show Interest has Expired");
-    } else {
-      require(timeRemaining > 0, "Show Interest has not Expired");
-    }
-    _;
-  }
+//     modifier showInterestExpired( bool requireExpired ) {
+//     uint256 timeRemaining = timeLeft();
+//     if( requireExpired ) {
+//       require(timeRemaining <= 0, "Show Interest has Expired");
+//     } else {
+//       require(timeRemaining > 0, "Show Interest has not Expired");
+//     }
+//     _;
+//   }
 
 
     constructor() ERC20 ("ZuriToken", "ZET") {
@@ -127,39 +128,7 @@ contract Election is ERC20 {
         require(stakeHolderExists[msg.sender] == true, "Only a stakeholder do this");
         _;
     }
-    ///@notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
-    function addStakeHolder (string memory _name, address _holder, uint _role) public onlyChairman {
-        require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
-        stakeHoldersCount ++;
-        Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name, _holder, _role); 
-        stakeholders[_holder] = holderDetails;
-        stakeHolderExists[_holder] = true;
-        stakeholderList.push(_holder);
-        //stakeholders[stakeHoldersCount] = holderDetails;
-    }
 
-    // function thisAddr() public view returns(address) {
-    //     return address(this);
-    // }
-
-    function batchTransfer(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
-    onlyChairman returns (bool transfered)
-    {
-        for(uint256 i = 0; i < stakeholderList.length; ++i) {
-            require(stakeholderList[i] != address(0), "Invalid Address");
-            require(stakeholderList.length <= 200, "exceeds number of allowed addressess");
-            address addr = stakeholderList[i];
-            
-            if(boardMemberCheck(addr) == true ) {
-                transfer(addr, boardMemberAmount*10**18);
-            } else if (teacherCheck(addr) == true) {
-                transfer(addr, teacherAmount*10**18);
-            } else if (studentshipCheck(addr) == true) {
-                transfer(addr, studentAmount*10**18);
-            } 
-        }
-        return(true);
-    }
 
     //checking if the current address is a board member
     function isBoardMember() public view returns (bool) {
@@ -233,20 +202,77 @@ contract Election is ERC20 {
         }
     }
 
+        ///@notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
+    function addStakeHolder (string memory _name, address _holder, uint _role) public onlyChairman {
+        require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
+        stakeHoldersCount ++;
+        Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name, _holder, _role); 
+        stakeholders[_holder] = holderDetails;
+        stakeHolderExists[_holder] = true;
+        stakeholderList.push(_holder);
+        //stakeholders[stakeHoldersCount] = holderDetails;
+    }
 
-    //Declare interest for leadership position
-    function expressInterest (string memory _name, string memory _positionContesting) public 
+    // function thisAddr() public view returns(address) {
+    //     return address(this);
+    // }
+
+    function batchTransfer(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
+    onlyChairman returns (bool transfered)
+    {
+        for(uint256 i = 0; i < stakeholderList.length; ++i) {
+            require(stakeholderList[i] != address(0), "Invalid Address");
+            require(stakeholderList.length <= 200, "exceeds number of allowed addressess");
+            address addr = stakeholderList[i];
+            
+            if(boardMemberCheck(addr) == true ) {
+                transfer(addr, boardMemberAmount*10**18);
+            } else if (teacherCheck(addr) == true) {
+                transfer(addr, teacherAmount*10**18);
+            } else if (studentshipCheck(addr) == true) {
+                transfer(addr, studentAmount*10**18);
+            } 
+        }
+        return(true);
+    }
+
+    mapping(string => uint) eligibleRole;
+    function setVotingCategory(string calldata _category, uint _roleEligible)  public onlyChairman{
+        voteCategory.push(_category);
+        categorySet[_category] = true;
+        eligibleRole[_category] = _roleEligible;
+    }
+
+
+    function setInterestDuration(uint _showInterestDuration) public onlyChairman {
+        showInterestDuration = _showInterestDuration;
+    }
+
+    function startShowInterest() public onlyChairman {
+        _showInterestStart = block.timestamp;
+        _showInterestEnd = showInterestDuration + _showInterestStart;
+        hasElectionStarted = false;
+    }
+
+    function timeLefttoShowInterest() public view returns(uint) {
+       return _showInterestEnd >= block.timestamp ? _showInterestEnd - block.timestamp : 0;
+    }
+
+
+    //Declare interest for current leadership position set by the chairman
+    function expressInterest(string calldata _name, string calldata _category) public 
     onlyStakeholder returns(uint){
-        require(canStillExpressInterest == true, "Interest Denied: Too late to show interest in this position");
-        require(isCompiler() == true, "Interest Denied : Unrecognised address, neither board member nor teacher");
+        require(timeLefttoShowInterest() > 0, "Time up: This position is no more accepting candidates");
+        require(categorySet[_category] == true, "Voting Category has not been set yet");
+        require(stakeholders[msg.sender].role == eligibleRole[_category], "This role is not eligible to contest" );
         require(msg.sender != address(0), "invalid address");
-        require(isContesting[msg.sender][_positionContesting] == false, "You have already shown interest in this position");
+        require(isContesting[msg.sender][_category] == false, "You have already shown interest in this position");
         require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
 
         candidatesCount ++;
-        candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _positionContesting, 0);
+        candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _category, 0);
 
-        isContesting[msg.sender][_positionContesting] = true;
+        isContesting[msg.sender][_category] = true;
 
         //since we're suggesting using candidate count to vote, the contestant should know their count
         return (candidatesCount);
@@ -255,8 +281,6 @@ contract Election is ERC20 {
     function getCandidateID() public view returns(uint) {
         return candidates[msg.sender].id;
     }
-
-
 
    
     //chairman can be changed for whatever reason 
@@ -273,46 +297,6 @@ contract Election is ERC20 {
         return(true); 
     }
 
-    function placeVote(address _candidate,string memory  _category) public onlyStakeholder
-    {
-        require(hasElectionStarted == true, "Election hasn't started");
-        require(timeLeft() > 0, "Voting has ended");
-        require(!voters[msg.sender][_category], "You have already voted in this category");
-        require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
-        require(balanceOf(msg.sender) > 0 , "You don't have enough tokens to vote");
-        
-        //require that candidate is valid
-        //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
-
-        //record that voter has voted
-        voters[msg.sender][_category] = true;
-
-        //update candidate vote count
-        candidates[_candidate].voteCount++;
-
-        Vote memory vote = Vote(_candidate, candidates[_candidate].voteCount);
-        allVotes[_candidate] = vote;
-        votedFor.push(_candidate);
-        
-        emit Voted(msg.sender);
-    }
-
-    function compileVotes() public view onlyCompiler returns(address[] memory, uint[] memory) {
-        uint len = votedFor.length;
-
-        address [] memory candidateId = new address[](len);
-        uint [] memory votesGotten  = new uint[](len);
-        for (uint i = 0; i < len ; ++i ) {
-            address key = votedFor[i];
-            Vote storage voting =  allVotes[key];
-            
-            candidateId[i] = voting.voteChoice;
-            votesGotten[i] = voting.count;
-        }
-
-        return(candidateId, votesGotten);
-    }
-
     function setElectionDuration(uint _electionDuration) public onlyChairman {
         electionDuration = _electionDuration;
     }
@@ -321,11 +305,57 @@ contract Election is ERC20 {
         _electionStart = block.timestamp;
         _electionEnd = electionDuration + _electionStart;
         hasElectionStarted = true;
-        //once election starts, interest in positions can not be shown anymore
-        canStillExpressInterest = false;
     }
 
     function timeLeft() public view returns(uint) {
        return _electionEnd >= block.timestamp ? _electionEnd - block.timestamp : 0;
+    }
+
+    function placeVote(address _candidate, string calldata _category) public onlyStakeholder
+    {
+        require(hasElectionStarted == true, "Election hasn't started");
+        require(categorySet[_category] == true, "Voting for this category will not be taking place right now");
+        require(timeLeft() > 0, "Voting has ended");
+        require(!voters[msg.sender][_category], "You have already voted in this category");
+        require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
+        require(transfer(chairman, 50*10**18) , "You don't have enough tokens to vote");
+
+        //require that candidate is valid
+        //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
+
+        //record that voter has voted
+        voters[msg.sender][_category] = true;
+
+        //update candidate vote count
+        candidates[_candidate].voteCount++;
+        candidates[_candidate].contestant = _candidate;
+        candidates[_candidate].category = _category;
+
+        votedFor.push(_candidate);
+        
+        emit Voted(_candidate, _category);
+    }
+
+    function compileVotes() public view onlyCompiler returns(string[] memory,address[] memory, uint[] memory) {
+        require(timeLeft() <= 0, "Election is still ongoing");
+        uint len = votedFor.length;
+
+        string[] memory categories = new string[](len);
+        address [] memory candidateId = new address[](len);
+        uint [] memory votesGotten  = new uint[](len);
+        for (uint i = 0; i < len ; ++i ) {
+            address key = votedFor[i]; 
+            categories[i] = candidates[key].category;           
+            candidateId[i] = candidates[key].contestant;
+            votesGotten[i] = candidates[key].voteCount;
+        }
+
+        return(categories, candidateId, votesGotten);
+    }
+
+
+
+    function getBalance() public view returns(uint) {
+        return balanceOf(msg.sender);
     }
 }
