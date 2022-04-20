@@ -2,19 +2,20 @@
 pragma solidity 0.8.7;
 
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract Election {
+contract ZuriElectionToken is ERC20 {
     address public chairman;
     address public students;
     address public Teachers;
     address public BoardOfDirectors;
     address public compilers;
 
-    uint256 public showInterest = block.timestamp + 240 seconds;
+    uint256 public showInterest = block.timestamp + 24 hours;
 
     bool public completed;
 
-    event DelegateChairman (address indexed to);
+    event DelegateChairman (address indexed to, uint256 amount);
 
     //Model a candidate
     struct Candidate {
@@ -39,18 +40,18 @@ contract Election {
 
     //Store & Fetch candidates
     mapping(uint => Candidate) public candidates;
+
     //Store candidates count
     uint public candidatesCount;
 
     //fetch stakeholders
-    //mapping(address => mapping(uint => Stakeholder)) public stakeholders;
     mapping(address => Stakeholder) public stakeholders;
+
     //store stakeHolders count
     uint public stakeHoldersCount;
 
     //checking if a stakeholder already exists
     mapping (address => bool) public stakeHolderExists;
-
 
     //mapping an address to the position they're contesting for
     mapping (address => mapping(string => bool)) public isContesting;
@@ -72,11 +73,7 @@ contract Election {
     _;
   }
 
-    constructor() {
-        chairman = msg.sender;
-    }
-
-    modifier onlyChairman() {
+   modifier onlyChairman() {
         require(msg.sender == chairman, "Only the chairman can perform this function");
         _;
     }
@@ -101,6 +98,11 @@ contract Election {
         _;
     }
 
+    constructor() ERC20 ("ZuriElectionToken", "ZET") {
+        _mint(msg.sender, 20000000 * 10 ** 18);
+        chairman = msg.sender;
+    }
+
     function addStakeHolder (string memory _name, address _holder, string memory _role) public onlyChairman {
         require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
         stakeHoldersCount ++;
@@ -109,6 +111,25 @@ contract Election {
         stakeHolderExists[_holder] = true;
         //stakeholders[stakeHoldersCount] = holderDetails;
     }
+
+    function batchTransfer(address[] calldata addressesTo, uint256[] calldata amounts) external 
+    onlyChairman returns (uint, bool)
+    {
+        require(addressesTo.length == amounts.length, "Invalid input parameters");
+
+        uint256 sum = 0;
+        for(uint256 i = 0; i < addressesTo.length; i++) {
+            require(addressesTo[i] != address(0), "Invalid Address");
+            require(amounts[i] != 0, "You cant't trasnfer 0 tokens");
+            require(addressesTo.length <= 200, "exceeds number of allowed addressess");
+            require(amounts.length <= 200, "exceeds number of allowed amounts");
+            
+            require(transfer(addressesTo[i], amounts[i]* 10 ** 18), "Unable to transfer token to the account");
+            sum += amounts[i];
+        }
+        return(sum, true);
+    }
+
 
     //checking if the current address is a board member
     function isBoardMember() public view returns (bool) {
@@ -200,16 +221,19 @@ contract Election {
 
    
     //chairman can be changed for whatever reason 
-    function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
+    function delegateChairmanship(address newChairman, uint amount) public onlyChairman returns(bool changed) {
         //require(newChairman == BoardOfDirectors || newChairman == Teachers);
         require(stakeHolderExists[newChairman] == true, "This address is not stakeholder at all");
         require(compilerCheck(newChairman) == true, "Chairmanship role can't be granted : Not a teacher or board member");
         require(studentshipCheck(newChairman) == false, "Chairmanship role can't be granted : Unauthorised address");
         require(newChairman != address(0), "Invalid address");
+        require(amount != 0, "Delegate an amount for the newChairman to handle");
 
         chairman = newChairman;
+
+        transfer(newChairman, amount * 10 ** 18);
         
-        emit DelegateChairman(newChairman);
+        emit DelegateChairman(newChairman, amount * 10 ** 18);
 
         return(true); 
     }
