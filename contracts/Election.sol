@@ -2,10 +2,11 @@
 pragma solidity 0.8.7;
 
 import "hardhat/console.sol";
-import "./ZuriToken.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
-contract Election {
+
+contract Election is ERC20 {
     address public chairman;
     address public students;
     address public Teacher;
@@ -21,6 +22,7 @@ contract Election {
     uint studentID = 2;
 
     uint256 public showInterest = block.timestamp + 240 seconds;
+
 
 
     event DelegateChairman (address indexed to);
@@ -93,19 +95,15 @@ contract Election {
     _;
   }
 
-    
-    ZuriToken public zuriToken;
 
-    constructor(address tokenAddress) {
-        zuriToken = ZuriToken(tokenAddress);
+    constructor() ERC20 ("ZuriToken", "ZET") {
+        _mint(msg.sender, 20000000 * 10 ** 18);
+        chairman = msg.sender;
     }
 
-    function getChairman() public view returns(address) {
-        return zuriToken.chairman();
-    }
 
     modifier onlyChairman() {
-        require(msg.sender == zuriToken.chairman(), "Only the chairman can perform this function");
+        require(msg.sender == chairman, "Only the chairman can perform this function");
         _;
     }
 
@@ -144,29 +142,21 @@ contract Election {
     //     return address(this);
     // }
 
-    function batchTransfer() external 
+    function batchTransfer(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
     onlyChairman returns (bool transfered)
     {
-        //uint256 sum = 0;
         for(uint256 i = 0; i < stakeholderList.length; ++i) {
             require(stakeholderList[i] != address(0), "Invalid Address");
             require(stakeholderList.length <= 200, "exceeds number of allowed addressess");
             address addr = stakeholderList[i];
-            uint boardMemberAmount = 5000*10**18;
-            uint teacherAmount = 3000*10**18;
-            uint studentshipAmount = 1500*10**18;
             
             if(boardMemberCheck(addr) == true ) {
-                zuriToken.approve(zuriToken.chairman(), boardMemberAmount);
-                zuriToken.transferFrom(zuriToken.chairman(), addr, boardMemberAmount);
+                transfer(addr, boardMemberAmount*10**18);
             } else if (teacherCheck(addr) == true) {
-                zuriToken.approve(address(this), 4500* 10 ** 18);
-                zuriToken.transferFrom(zuriToken.chairman(), addr, 4500* 10 ** 18);
+                transfer(addr, teacherAmount*10**18);
             } else if (studentshipCheck(addr) == true) {
-                zuriToken.approve(address(this), 3000* 10 ** 18);
-                zuriToken.transferFrom(zuriToken.chairman(), addr, 3000* 10 ** 18);
+                transfer(addr, studentAmount*10**18);
             } 
-            //sum += amounts[i];
         }
         return(true);
     }
@@ -251,6 +241,7 @@ contract Election {
         require(isCompiler() == true, "Interest Denied : Unrecognised address, neither board member nor teacher");
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_positionContesting] == false, "You have already shown interest in this position");
+        require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
 
         candidatesCount ++;
         candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _positionContesting, 0);
@@ -288,7 +279,7 @@ contract Election {
         require(timeLeft() > 0, "Voting has ended");
         require(!voters[msg.sender][_category], "You have already voted in this category");
         require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
-
+        require(balanceOf(msg.sender) > 0 , "You don't have enough tokens to vote");
         
         //require that candidate is valid
         //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
