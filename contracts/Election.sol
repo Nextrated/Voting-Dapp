@@ -2,20 +2,29 @@
 pragma solidity 0.8.7;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./ZuriToken.sol";
 
-contract ZuriElectionToken is ERC20 {
+
+contract Election {
     address public chairman;
     address public students;
-    address public Teachers;
+    address public Teacher;
     address public BoardOfDirectors;
     address public compilers;
+    
+    uint _electionStart;
+    uint _electionEnd;
+    uint electionDuration;
 
-    uint256 public showInterest = block.timestamp + 24 hours;
+    uint teacherID = 1;
+    uint boardMemberID = 0;
+    uint studentID = 2;
 
-    bool public completed;
+    uint256 public showInterest = block.timestamp + 240 seconds;
 
-    event DelegateChairman (address indexed to, uint256 amount);
+
+    event DelegateChairman (address indexed to);
+    event Voted(address voter);
 
     //Model a candidate
     struct Candidate {
@@ -25,36 +34,53 @@ contract ZuriElectionToken is ERC20 {
         string positionContesting;
         uint voteCount;
     }
+    address[] public stakeholderList;
 
     //model a stakeHolder
     struct Stakeholder {
         uint id;
         string name;
         address holder;
-        string role;
+        uint role;
     }
+
+    struct Vote {
+        address voteChoice;
+        uint count;
+    }
+    Vote[] public votesss;
+   
+
+    mapping(address => uint) public contestant;
 
     
     //store accounts that have voted
-    mapping(address => bool) public voters;
+    mapping(address =>  mapping(string => bool)) public voters;
+    mapping (address => Vote) public allVotes; 
+    address[] public votedFor;
+
+
 
     //Store & Fetch candidates
-    mapping(uint => Candidate) public candidates;
-
+    mapping(address => Candidate) public candidates;
     //Store candidates count
     uint public candidatesCount;
 
     //fetch stakeholders
+    //mapping(address => mapping(uint => Stakeholder)) public stakeholders;
     mapping(address => Stakeholder) public stakeholders;
-
     //store stakeHolders count
     uint public stakeHoldersCount;
 
     //checking if a stakeholder already exists
     mapping (address => bool) public stakeHolderExists;
 
+
     //mapping an address to the position they're contesting for
     mapping (address => mapping(string => bool)) public isContesting;
+
+    bool hasElectionStarted;
+    bool canStillExpressInterest = true;
 
     //showInterestExpired modifier
     modifier showInterestExpired( bool requireExpired ) {
@@ -67,16 +93,22 @@ contract ZuriElectionToken is ERC20 {
     _;
   }
 
-    //ElectionNotCompleted modifier
-    modifier electionNotCompleted() {
-    require(!completed, "election process already completed");
-    _;
-  }
+    
+    ZuriToken public zuriToken;
 
-   modifier onlyChairman() {
-        require(msg.sender == chairman, "Only the chairman can perform this function");
+    constructor(address tokenAddress) {
+        zuriToken = ZuriToken(tokenAddress);
+    }
+
+    function getChairman() public view returns(address) {
+        return zuriToken.chairman();
+    }
+
+    modifier onlyChairman() {
+        require(msg.sender == zuriToken.chairman(), "Only the chairman can perform this function");
         _;
     }
+
     modifier onlyCompiler() {
         require(isCompiler() == true, "Only a compiler can perform this function");
         _;
@@ -97,43 +129,51 @@ contract ZuriElectionToken is ERC20 {
         require(stakeHolderExists[msg.sender] == true, "Only a stakeholder do this");
         _;
     }
-
-    constructor() ERC20 ("ZuriElectionToken", "ZET") {
-        _mint(msg.sender, 20000000 * 10 ** 18);
-        chairman = msg.sender;
-    }
-
-    function addStakeHolder (string memory _name, address _holder, string memory _role) public onlyChairman {
+    ///@notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
+    function addStakeHolder (string memory _name, address _holder, uint _role) public onlyChairman {
         require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
         stakeHoldersCount ++;
         Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name, _holder, _role); 
         stakeholders[_holder] = holderDetails;
         stakeHolderExists[_holder] = true;
+        stakeholderList.push(_holder);
         //stakeholders[stakeHoldersCount] = holderDetails;
     }
 
-    function batchTransfer(address[] calldata addressesTo, uint256[] calldata amounts) external 
-    onlyChairman returns (uint, bool)
+    // function thisAddr() public view returns(address) {
+    //     return address(this);
+    // }
+
+    function batchTransfer() external 
+    onlyChairman returns (bool transfered)
     {
-        require(addressesTo.length == amounts.length, "Invalid input parameters");
-
-        uint256 sum = 0;
-        for(uint256 i = 0; i < addressesTo.length; i++) {
-            require(addressesTo[i] != address(0), "Invalid Address");
-            require(amounts[i] != 0, "You cant't trasnfer 0 tokens");
-            require(addressesTo.length <= 200, "exceeds number of allowed addressess");
-            require(amounts.length <= 200, "exceeds number of allowed amounts");
+        //uint256 sum = 0;
+        for(uint256 i = 0; i < stakeholderList.length; ++i) {
+            require(stakeholderList[i] != address(0), "Invalid Address");
+            require(stakeholderList.length <= 200, "exceeds number of allowed addressess");
+            address addr = stakeholderList[i];
+            uint boardMemberAmount = 5000*10**18;
+            uint teacherAmount = 3000*10**18;
+            uint studentshipAmount = 1500*10**18;
             
-            require(transfer(addressesTo[i], amounts[i]* 10 ** 18), "Unable to transfer token to the account");
-            sum += amounts[i];
+            if(boardMemberCheck(addr) == true ) {
+                zuriToken.approve(zuriToken.chairman(), boardMemberAmount);
+                zuriToken.transferFrom(zuriToken.chairman(), addr, boardMemberAmount);
+            } else if (teacherCheck(addr) == true) {
+                zuriToken.approve(address(this), 4500* 10 ** 18);
+                zuriToken.transferFrom(zuriToken.chairman(), addr, 4500* 10 ** 18);
+            } else if (studentshipCheck(addr) == true) {
+                zuriToken.approve(address(this), 3000* 10 ** 18);
+                zuriToken.transferFrom(zuriToken.chairman(), addr, 3000* 10 ** 18);
+            } 
+            //sum += amounts[i];
         }
-        return(sum, true);
+        return(true);
     }
-
 
     //checking if the current address is a board member
     function isBoardMember() public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Board Member"))) {
+        if (stakeholders[msg.sender].role == boardMemberID) {
             return true;
         } else {
             return false;
@@ -142,7 +182,7 @@ contract ZuriElectionToken is ERC20 {
 
     //checking if the current address is a teacher
     function isTeacher() public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Teacher"))) {
+        if (stakeholders[msg.sender].role == teacherID) {
             return true;
         } else {
             return false;
@@ -151,7 +191,7 @@ contract ZuriElectionToken is ERC20 {
 
     //checking if the current address is a student
     function isStudent() public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Student"))) {
+        if (stakeholders[msg.sender].role == studentID) {
             return true;
         } else {
             return false;
@@ -160,7 +200,7 @@ contract ZuriElectionToken is ERC20 {
 
     //checking if the current address is a teacher or board member
     function isCompiler() public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Teacher")) || (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Board Member")))) {
+        if (stakeholders[msg.sender].role == boardMemberID || stakeholders[msg.sender].role == teacherID) {
             return true;
         } else {
             return false;
@@ -169,7 +209,7 @@ contract ZuriElectionToken is ERC20 {
 
     /// @notice Check for verifying if an address is a teacher or board member
     function compilerCheck(address _addr) public view returns (bool) {
-       if (keccak256(abi.encodePacked(stakeholders[_addr].role)) == keccak256(abi.encodePacked("Teacher")) || (keccak256(abi.encodePacked(stakeholders[msg.sender].role)) == keccak256(abi.encodePacked("Board Member")))) {
+       if ((stakeholders[_addr].role == teacherID) || (stakeholders[_addr].role == boardMemberID)) {
             return true;
         } else {
             return false;
@@ -178,7 +218,7 @@ contract ZuriElectionToken is ERC20 {
 
     /// @notice Check for verifying if an address is a board member
     function boardMemberCheck(address _addr) public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[_addr].role)) == keccak256(abi.encodePacked("Board Member"))) {
+        if (stakeholders[_addr].role == boardMemberID) {
             return true;
         } else {
             return false;
@@ -187,7 +227,7 @@ contract ZuriElectionToken is ERC20 {
 
     /// @notice Check for verifying if an address is a teacher
     function teacherCheck(address _addr) public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[_addr].role)) == keccak256(abi.encodePacked("Teacher"))) {
+        if (stakeholders[_addr].role == teacherID) {
             return true;
         } else {
             return false;
@@ -196,7 +236,7 @@ contract ZuriElectionToken is ERC20 {
 
     /// @notice Check for verifying if an address is a student
     function studentshipCheck(address _addr) public view returns (bool) {
-        if (keccak256(abi.encodePacked(stakeholders[_addr].role)) == keccak256(abi.encodePacked("Student"))) {
+        if (stakeholders[_addr].role == studentID) {
             return true;
         } else {
             return false;
@@ -205,13 +245,15 @@ contract ZuriElectionToken is ERC20 {
 
 
     //Declare interest for leadership position
-    function expressInterest (string memory _name, string memory _positionContesting) public showInterestExpired(false) electionNotCompleted onlyStakeholder returns(uint){
+    function expressInterest (string memory _name, string memory _positionContesting) public 
+    onlyStakeholder returns(uint){
+        require(canStillExpressInterest == true, "Interest Denied: Too late to show interest in this position");
         require(isCompiler() == true, "Interest Denied : Unrecognised address, neither board member nor teacher");
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_positionContesting] == false, "You have already shown interest in this position");
 
         candidatesCount ++;
-        candidates[candidatesCount] = Candidate(candidatesCount, _name, msg.sender, _positionContesting, 0);
+        candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _positionContesting, 0);
 
         isContesting[msg.sender][_positionContesting] = true;
 
@@ -219,48 +261,80 @@ contract ZuriElectionToken is ERC20 {
         return (candidatesCount);
     }
 
+    function getCandidateID() public view returns(uint) {
+        return candidates[msg.sender].id;
+    }
+
+
+
    
     //chairman can be changed for whatever reason 
-    function delegateChairmanship(address newChairman, uint amount) public onlyChairman returns(bool changed) {
-        //require(newChairman == BoardOfDirectors || newChairman == Teachers);
+    function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
         require(stakeHolderExists[newChairman] == true, "This address is not stakeholder at all");
         require(compilerCheck(newChairman) == true, "Chairmanship role can't be granted : Not a teacher or board member");
         require(studentshipCheck(newChairman) == false, "Chairmanship role can't be granted : Unauthorised address");
         require(newChairman != address(0), "Invalid address");
-        require(amount != 0, "Delegate an amount for the newChairman to handle");
 
         chairman = newChairman;
-
-        transfer(newChairman, amount * 10 ** 18);
         
-        emit DelegateChairman(newChairman, amount * 10 ** 18);
+        emit DelegateChairman(newChairman);
 
         return(true); 
     }
 
-    function vote(uint _candidateId) public showInterestExpired(true) electionNotCompleted {
-        //require that they havnt voted before
-        require(!voters[msg.sender]);
+    function placeVote(address _candidate,string memory  _category) public onlyStakeholder
+    {
+        require(hasElectionStarted == true, "Election hasn't started");
+        require(timeLeft() > 0, "Voting has ended");
+        require(!voters[msg.sender][_category], "You have already voted in this category");
+        require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
+
         
         //require that candidate is valid
-        require(_candidateId > 0 && _candidateId <= candidatesCount);
+        //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
 
         //record that voter has voted
-        voters[msg.sender] = true;
+        voters[msg.sender][_category] = true;
 
         //update candidate vote count
-        candidates[_candidateId].voteCount ++;
+        candidates[_candidate].voteCount++;
+
+        Vote memory vote = Vote(_candidate, candidates[_candidate].voteCount);
+        allVotes[_candidate] = vote;
+        votedFor.push(_candidate);
+        
+        emit Voted(msg.sender);
     }
 
-function timeLeft() public view returns (uint256) {
-    if( block.timestamp >= showInterest ) {
-      return 0;
-    } else {
-      return showInterest - block.timestamp;
-    }
-     }
+    function compileVotes() public view onlyCompiler returns(address[] memory, uint[] memory) {
+        uint len = votedFor.length;
 
-      function complete() public {
-    completed = true;
-  }
+        address [] memory candidateId = new address[](len);
+        uint [] memory votesGotten  = new uint[](len);
+        for (uint i = 0; i < len ; ++i ) {
+            address key = votedFor[i];
+            Vote storage voting =  allVotes[key];
+            
+            candidateId[i] = voting.voteChoice;
+            votesGotten[i] = voting.count;
+        }
+
+        return(candidateId, votesGotten);
+    }
+
+    function setElectionDuration(uint _electionDuration) public onlyChairman {
+        electionDuration = _electionDuration;
+    }
+
+    function startElection() public onlyChairman {
+        _electionStart = block.timestamp;
+        _electionEnd = electionDuration + _electionStart;
+        hasElectionStarted = true;
+        //once election starts, interest in positions can not be shown anymore
+        canStillExpressInterest = false;
+    }
+
+    function timeLeft() public view returns(uint) {
+       return _electionEnd >= block.timestamp ? _electionEnd - block.timestamp : 0;
+    }
 }
