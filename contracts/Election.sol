@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MIT
-<<<<<<< HEAD
-pragma solidity 0.8.4;
-=======
 pragma solidity ^0.8.4;
->>>>>>> 55a4f1bec01c88eaec5dbd031288b3567bb8d5a2
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";

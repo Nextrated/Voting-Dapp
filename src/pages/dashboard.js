@@ -84,8 +84,8 @@ const addStakeholder = async (name, address, stakeholder) => {
         setSubmitted('');
         onClose();
         toast({
-          title: 'Successfull',
-          description: `File uploaded successfully`,
+          title: 'Successful',
+          description: `added stakeholder successfully`,
           status: 'success',
           duration: '5000',
           isClosable: true,
@@ -113,9 +113,6 @@ const addStakeholders = (e) => {
   setIsSubmitted(true);
   addStakeholder(name, address, stakeholder)
 }
-
-
-
 
 
 
