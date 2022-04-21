@@ -4,9 +4,12 @@ import Header from "./components/Header";
 import Banner from "./components/banner"
 import Dashboard from "./pages/dashboard";
 import Chairman from './pages/Chairman'
+import SetVotingAndTime from './pages/SetVotingAndTime';
 import Home from "./pages/home";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
+
 
 function App() {
   const [currentAccount, setCurrentAccount] = useState ('');
@@ -118,6 +121,7 @@ function App() {
               <Route path="/" element={<Home currentAccount={currentAccount}/>}/>
               <Route path="/dashboard" element={<Dashboard currentAccount={currentAccount}/>}/>
               <Route path="/chairman" element={<Chairman/>}/>
+              <Route path="/setvote" element={<SetVotingAndTime/>}/>
           </Routes>
       </Box>
     </BrowserRouter>
