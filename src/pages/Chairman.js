@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {
   FormControl,
   FormLabel,
@@ -10,11 +10,16 @@ import {
   Center,
   Button,
   useToast,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Radio,
+  RadioGroup,
 } from '@chakra-ui/react';
 import {Link} from 'react-router-dom';
 
@@ -25,6 +30,7 @@ import abi from '../utils/abi.json';
 
 const Chairman = () => {
   const [addDelegateAddress, setAddDelegateAddress] = useState ('');
+  const { isOpen, onOpen, onClose } = useDisclosure()
   const [submitted, setSubmitted] = useState ('');
   const [isSubmitted, setIsSubmitted] = useState (false);
   const [isTokenSent, setIsTokenSent] = useState (false);
@@ -33,6 +39,13 @@ const Chairman = () => {
   const [teacherAmount, setTeacherAmount] = useState('')
   const [studentAmount, setStudentAmount] = useState('')
 
+  const [name, setName] = useState('')
+  const [address, setAddress] = useState('')
+  const [stakeholder, setStakeholder] = useState('')
+
+
+  const initialRef = useRef()
+  const finalRef = useRef()
 
   const showErrorToast = message => {
     toast ({
@@ -43,6 +56,59 @@ const Chairman = () => {
       isClosable: true,
     });
   };
+  const addStakeholder = async (name, address, stakeholder) => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const addStakeholderContract = new ethers.Contract(
+          contractAddress.contractAddress,
+          abi.abi,
+          signer
+        );
+        const addStakeholderTxn = await addStakeholderContract.addStakeHolder(
+          name,
+          address,
+          stakeholder
+        );
+        await addStakeholderTxn.wait();
+        setSubmitted('stakeholder added successfully!');
+        setIsSubmitted(false);
+  
+        setTimeout(() => {
+          setSubmitted('');
+          onClose();
+          toast({
+            title: 'Successfull',
+            description: `File uploaded successfully`,
+            status: 'success',
+            duration: '5000',
+            isClosable: true,
+          });
+        }, 1000);
+      } else {
+        onClose();
+        setIsSubmitted(false);
+        setSubmitted('');
+        showErrorToast('Please ensure you are connected to metamask');
+        console.log('ethereum object does not exist!');
+      }
+    } catch (error) {
+      // onClose();
+      // setIsSubmitted(false);
+      // setSubmitted('');
+      // showErrorToast('An unexpected error occured');
+      console.log(error);
+    }
+  };
+  
+  
+  const addStakeholders = (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    addStakeholder(name, address, stakeholder)
+  }
   const addDelegate = async address => {
     try {
       const {ethereum} = window;
@@ -146,7 +212,65 @@ const handleSendTokens = e => {
 
   return (
     <Box>
+
+      
       <Box w="60%" ml="20">
+      <Button onClick={onOpen} mr='4'>Add stakeholder</Button>
+      <Modal
+        initialFocusRef={initialRef}
+        finalFocusRef={finalRef}
+        isOpen={isOpen}
+        onClose={onClose}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add a stakeholder</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <form onSubmit={addStakeholders}>
+              <FormLabel>Name of stakeholder</FormLabel>
+              <Input ref={initialRef} placeholder='Enter name' mb='4' value={name} onChange={e => setName(e.target.value)} required/>
+
+              <FormLabel>Address of stakeholder</FormLabel>
+              <Input ref={initialRef} placeholder='Enter address' mb='4' value={address} onChange={e => setAddress(e.target.value)} required/>
+<RadioGroup required >
+<Radio value='0' mr='2' onChange={e => setStakeholder(e.target.value)}>
+Board Member
+</Radio>
+<Radio value='1' mr='2' onChange={e => setStakeholder(e.target.value)}>
+Teacher
+</Radio>
+<Radio value='2' onChange={e => setStakeholder(e.target.value)}>
+Student
+</Radio>
+</RadioGroup>
+
+          <ModalFooter>
+          <Text mr={2} color={'green.500'}>
+                  {submitted}
+                </Text>
+                {isSubmitted === false ? (
+                  <Button colorScheme="blue" mr={3} type="submit">
+                    Add
+                  </Button>
+                ) : (
+                  <Button
+                    colorScheme="blue"
+                    mr={3}
+                    type="submit"
+                    isLoading
+                    loadingText="Adding"
+                  >
+                    Adding
+                  </Button>
+                )}
+            <Button onClick={onClose}>Cancel</Button>
+          </ModalFooter>
+          </form>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
         <Link to="/setvote">
           <Button my="4">
             Set time and category for election
@@ -252,6 +376,9 @@ const handleSendTokens = e => {
         </Box>
 
       </Box>
+
+
+     
     </Box>
   );
 };
