@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Text, Image, Button, useColorModeValue} from "@chakra-ui/react"
+import { Box, Text, Image, Button } from "@chakra-ui/react"
 import {isStakeholder} from "../utils";
 
 const Home = ({currentAccount}) => {

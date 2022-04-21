@@ -230,7 +230,7 @@ contract Election is ERC20 {
     /// @param  boardMemberAmount is the amount to send to stakeholders with the board member roles
     /// @param  teacherAmount is the amount to send to stakeholders with the teacher roles
     /// @param  studentAmount is the amount to send to stakeholders with the student roles
-    function batchTransfer(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
+    function batchTransferToExistingStakeholders(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
     onlyChairman returns (bool transfered)
     {
         for(uint256 i = 0; i < stakeholderList.length; ++i) {
@@ -249,6 +249,33 @@ contract Election is ERC20 {
         return(true);
     }
 
+    /// @notice Add stakeholders in a batch and send them tokens in one go
+    /// @notice this function disperses tokens to the list of added stakeholders in one go.
+    /// @param  _name name of the stakeholder
+    /// @param  _holder address of the stakeholders to add
+    /// @param  _role Roles represented by 0,1,2 of the respective stakeholders 
+    /// @param _amounts Amount to send to respective stakeholders
+    function batchTransferandAdd(string[] memory _name, address[] memory _holder, uint[] memory _role, uint[] calldata _amounts) external 
+    onlyChairman returns ( bool)
+    {
+        require(_holder.length == _amounts.length, "Invalid input parameters");
+        for(uint256 i = 0; i < _holder.length; i++) {
+            require(_holder[i] != address(0), "Invalid Address");
+            require(_amounts[i] != 0, "You cant't trasnfer 0 tokens");
+            require(_holder.length <= 200, "exceeds number of allowed addressess");
+            require(_amounts.length <= 200, "exceeds number of allowed amounts");
+            
+            //automatically add these addresses to stakeholders and their respective roles
+            stakeHoldersCount++;
+            Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name[i], _holder[i], _role[i]); 
+            stakeholders[_holder[i]] = holderDetails;
+            //transfer tokens to the addresses
+            require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Unable to transfer token to the account");
+
+        }
+        return(true);
+    }
+
     /// @notice mapping the category to the roles eligible to contest
     mapping(string => uint) eligibleRole;
 
@@ -262,16 +289,11 @@ contract Election is ERC20 {
         eligibleRole[_category] = _roleEligible;
     }
 
-    /// @notice Function to set the time span for expressing interests for a position
-    /// @param _showInterestDuration represents the time in seconds allowed for expressing interest in a position
-    function setInterestDuration(uint _showInterestDuration) public onlyChairman {
-        showInterestDuration = _showInterestDuration;
-    }
-
     /// @notice Function to start the time-span for expressing interest
-    function startShowInterest() public onlyChairman {
+    /// @param _showInterestDuration represents the time in seconds allowed for expressing interest in a position
+    function startShowInterest(uint _showInterestDuration) public onlyChairman {
         _showInterestStart = block.timestamp;
-        _showInterestEnd = showInterestDuration + _showInterestStart;
+        _showInterestEnd = _showInterestDuration + _showInterestStart;
         hasElectionStarted = false;
     }
 
@@ -298,7 +320,7 @@ contract Election is ERC20 {
     onlyStakeholder returns(uint){
         require(timeLefttoShowInterest() > 0, "Time up: This position is no more accepting candidates");
         require(categorySet[_category] == true, "Voting Category has not been set yet");
-        require(stakeholders[msg.sender].role == eligibleRole[_category], "This role is not eligible to contest" );
+        require(stakeholders[msg.sender].role == eligibleRole[_category], "Not eligible to contest for this role" );
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_category] == false, "You have already shown interest in this position");
         require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
@@ -333,16 +355,11 @@ contract Election is ERC20 {
         return(true); 
     }
 
-    /// @notice Function to set the time span for voting to start
-    /// @param _electionDuration represents the time in seconds allowed for the voting process
-    function setElectionDuration(uint _electionDuration) public onlyChairman {
-        electionDuration = _electionDuration;
-    }
-
     /// @notice Function to start the voting process
-    function startElection() public onlyChairman {
+    /// @param _electionDuration represents the time in seconds allowed for the voting process
+    function startElection(uint _electionDuration) public onlyChairman {
         _electionStart = block.timestamp;
-        _electionEnd = electionDuration + _electionStart;
+        _electionEnd = _electionDuration + _electionStart;
         hasElectionStarted = true;
     }
 

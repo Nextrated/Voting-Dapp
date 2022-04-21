@@ -6,7 +6,7 @@ import { GoFileSubmodule } from 'react-icons/go';
 import { FcViewDetails } from 'react-icons/fc';
 import { SiOpslevel } from 'react-icons/si';
 import { BiSad } from 'react-icons/bi';
-import { getUserDetails, getUserBalance, isStudent, hasElectionStarted, isResultAnnounced } from "../utils";
+import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced } from "../utils";
 import ElectionDetails  from "../components/ElectionDetails";
 
 const Dashboard = ({currentAccount}) => {
@@ -37,11 +37,8 @@ const Dashboard = ({currentAccount}) => {
       }, [bal, role, name])
 
 
-    // const showElectionDetails = () => {
-
-    // }
-
     const contest = ()=> {
+        onClose()
         if (role === "Student"){
             toast({
                 title:"Sorry",
@@ -56,8 +53,9 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const announce = async() => {
-        const res = await isResultAnnounced(window.ethereum)
-        if (res === false){
+        onClose()
+        const r = await isResultAnnounced(window.ethereum)
+        if (r === false){
             toast({
                 title:"Sorry",
                 description:"Election results have not been announced yet!",
@@ -71,8 +69,9 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const vote = async ()=> {
-        const res = await hasElectionStarted(window.ethereum)
-        if (res === false){
+        onClose()
+        const r = await hasElectionStarted(window.ethereum)
+        if (r === false){
             toast({
                 title:"Sorry",
                 description:"Voting for this election has not commenced!",
@@ -86,7 +85,7 @@ const Dashboard = ({currentAccount}) => {
 
     }
 
-    const showElectionDetails = ()=>{
+    const showElectionDetails = () => {
         onOpen();
     }
 
@@ -150,8 +149,7 @@ const Dashboard = ({currentAccount}) => {
             </Box>
             <ElectionDetails onClose={onClose} isOpen={isOpen} />
         </Box>
-    );
+  );
 };
- 
 
 export default Dashboard;
