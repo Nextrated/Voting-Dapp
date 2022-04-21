@@ -249,32 +249,32 @@ contract Election is ERC20 {
         return(true);
     }
 
-    /// @notice Add stakeholders in a batch and send them tokens in one go
-    /// @notice this function disperses tokens to the list of added stakeholders in one go.
-    /// @param  _name name of the stakeholder
-    /// @param  _holder address of the stakeholders to add
-    /// @param  _role Roles represented by 0,1,2 of the respective stakeholders 
-    /// @param _amounts Amount to send to respective stakeholders
-    function batchTransferandAdd(string[] memory _name, address[] memory _holder, uint[] memory _role, uint[] calldata _amounts) external 
-    onlyChairman returns ( bool)
-    {
-        require(_holder.length == _amounts.length, "Invalid input parameters");
-        for(uint256 i = 0; i < _holder.length; i++) {
-            require(_holder[i] != address(0), "Invalid Address");
-            require(_amounts[i] != 0, "You cant't trasnfer 0 tokens");
-            require(_holder.length <= 200, "exceeds number of allowed addressess");
-            require(_amounts.length <= 200, "exceeds number of allowed amounts");
+    // /// @notice Add stakeholders in a batch and send them tokens in one go
+    // /// @notice this function disperses tokens to the list of added stakeholders in one go.
+    // /// @param  _name name of the stakeholder
+    // /// @param  _holder address of the stakeholders to add
+    // /// @param  _role Roles represented by 0,1,2 of the respective stakeholders 
+    // /// @param _amounts Amount to send to respective stakeholders
+    // function batchTransferandAdd(string[] memory _name, address[] memory _holder, uint[] memory _role, uint[] calldata _amounts) external 
+    // onlyChairman returns ( bool)
+    // {
+    //     require(_holder.length == _amounts.length, "Invalid input parameters");
+    //     for(uint256 i = 0; i < _holder.length; i++) {
+    //         require(_holder[i] != address(0), "Invalid Address");
+    //         require(_amounts[i] != 0, "You cant't trasnfer 0 tokens");
+    //         require(_holder.length <= 200, "exceeds number of allowed addressess");
+    //         require(_amounts.length <= 200, "exceeds number of allowed amounts");
             
-            //automatically add these addresses to stakeholders and their respective roles
-            stakeHoldersCount++;
-            Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name[i], _holder[i], _role[i]); 
-            stakeholders[_holder[i]] = holderDetails;
-            //transfer tokens to the addresses
-            require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Unable to transfer token to the account");
+    //         //automatically add these addresses to stakeholders and their respective roles
+    //         stakeHoldersCount++;
+    //         Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name[i], _holder[i], _role[i]); 
+    //         stakeholders[_holder[i]] = holderDetails;
+    //         //transfer tokens to the addresses
+    //         require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Unable to transfer token to the account");
 
-        }
-        return(true);
-    }
+    //     }
+    //     return(true);
+    // }
 
     /// @notice mapping the category to the roles eligible to contest
     mapping(string => uint) eligibleRole;
@@ -311,6 +311,14 @@ contract Election is ERC20 {
        return _showInterestEnd >= block.timestamp ? _showInterestEnd - block.timestamp : 0;
     }
 
+    function getCurrentCategory() public view returns(string[] memory, uint) {
+        uint role;
+        for (uint i = 0 ; i < voteCategory.length ; ++i) {
+            role = eligibleRole[voteCategory[i]];
+        }
+        return (voteCategory, role);
+    }
+
 
     /// @notice Function to declare interest for current leadership position set by the chairman
     /// @param _name represents the name of the stakeholder wants to show interest
@@ -334,10 +342,10 @@ contract Election is ERC20 {
         return (candidatesCount);
     }
 
-    /// @notice gets the candidate id of the current stakeholder provided they're a contestant
-    function getCandidateID() public view returns(uint) {
-        return candidates[msg.sender].id;
-    }
+    // /// @notice gets the candidate id of the current stakeholder provided they're a contestant
+    // function getCandidateID() public view returns(uint) {
+    //     return candidates[msg.sender].id;
+    // }
 
    
     /// @notice Delegating the chairman role to another stakeholder
