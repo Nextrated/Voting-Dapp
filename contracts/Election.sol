@@ -311,6 +311,14 @@ contract Election is ERC20 {
        return _showInterestEnd >= block.timestamp ? _showInterestEnd - block.timestamp : 0;
     }
 
+    function getCurrentCategory() public view returns(string[] memory, uint) {
+        uint role;
+        for (uint i = 0 ; i < voteCategory.length ; ++i) {
+            role = eligibleRole[voteCategory[i]];
+        }
+        return (voteCategory, role);
+    }
+
 
     /// @notice Function to declare interest for current leadership position set by the chairman
     /// @param _name represents the name of the stakeholder wants to show interest
@@ -334,10 +342,10 @@ contract Election is ERC20 {
         return (candidatesCount);
     }
 
-    /// @notice gets the candidate id of the current stakeholder provided they're a contestant
-    function getCandidateID() public view returns(uint) {
-        return candidates[msg.sender].id;
-    }
+    // /// @notice gets the candidate id of the current stakeholder provided they're a contestant
+    // function getCandidateID() public view returns(uint) {
+    //     return candidates[msg.sender].id;
+    // }
 
    
     /// @notice Delegating the chairman role to another stakeholder
