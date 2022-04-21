@@ -25,8 +25,8 @@ import {Link} from 'react-router-dom';
 
 import {ethers} from 'ethers';
 
-import contractAddress from '../utils/contract_address.json';
-import abi from '../utils/abi.json';
+import contractAddress from '../contracts/contract_address.json';
+import abi from '../contracts/abi.json';
 
 const Chairman = () => {
   const [addDelegateAddress, setAddDelegateAddress] = useState ('');

@@ -38,7 +38,7 @@ const Dashboard = ({currentAccount}) => {
 
 
     const contest = ()=> {
-        onClose()
+        //onClose()
         if (role === "Student"){
             toast({
                 title:"Sorry",
@@ -53,7 +53,7 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const announce = async() => {
-        onClose()
+       // onClose()
         const r = await isResultAnnounced(window.ethereum)
         if (r === false){
             toast({
@@ -69,7 +69,7 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const vote = async ()=> {
-        onClose()
+        // onClose()
         const r = await hasElectionStarted(window.ethereum)
         if (r === false){
             toast({
@@ -147,7 +147,7 @@ const Dashboard = ({currentAccount}) => {
                         
                 </Box>
             </Box>
-            <ElectionDetails onClose={onClose} isOpen={isOpen} />
+            {/* <ElectionDetails onClose={onClose} isOpen={isOpen} /> */}
         </Box>
   );
 };

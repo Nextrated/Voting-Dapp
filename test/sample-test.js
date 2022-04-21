@@ -21,46 +21,46 @@ describe("Election", function() {
     })
   })
 
-//   describe("swap token", function() {
-//     it("User token should reduce after token swap", async function() {
-//       const NestcoinToken = await ethers.getContractFactory("NestcoinToken")
-//       const nestcoin_token = await NestcoinToken.deploy()
-//       await nestcoin_token.deployed()
+  describe("Token contract", function () {
+    let contract;
+    let Election;
+    let owner;
+    let addr1;
+    let addrs;
+  
+    beforeEach(async function () {
+      [owner, addr1, ...addrs] = await ethers.getSigners(); 
+  
+      Election = await ethers.getContractFactory("Election")
+      contract = await Election.deploy()
+    });
+  
+    describe("Stakeholder", function () {
 
-//     })
-//   })
+      it('Should add stakeholder with board member role ', async function() {
+        await contract.addStakeHolder("Philip", owner.address, 0);
+        const stakeholderCheck = await contract.boardMemberCheck(owner.address);
 
-//   describe("Token contract", function () {
-//     let contract;
-//     let NestcoinToken;
-//     let owner;
-//     let addr1;
-//     let addrs;
-  
-//     beforeEach(async function () {
-//       [owner, addr1, ...addrs] = await ethers.getSigners(); 
-  
-//       NestcoinToken = await ethers.getContractFactory("BatchTransact")
-//       contract = await NestcoinToken.deploy()
-//     });
-  
-//     describe("Transaction", function () {
+      expect(stakeholderCheck).to.equal(true);
+      })
 
-//       it('Should make batch transfer ', async function() {
-//         const BatchTranfer = await NestcoinToken.transfer(addr1, ...addrs);
-//         expect(BatchTranfer).to.increase(200);
-  
-//         //owner to check the remaining token after distribution
-//         const CheckTokenBalance = await NestcoinToken.balanceOf(owner.address);
-//         expect(CheckTokenBalance).sub(totalSupply);
-  
-//         //current user to check their balance
-//         const UserBalance = await NestcoinToken.balanceOf(addr1, ...addrs);
-//         expect(UserBalance).to.increase(200);
-  
-        
-//       })
-//   });
-// })
-// });
+      it('Should add stakeholder with teacher role ', async function() {
+        const [addr1] = await ethers.getSigners();
+        await contract.addStakeHolder("Philip", addr1.address, 1);
+        const teacherCheck  = await contract.teacherCheck(addr1.address);
+        expect(teacherCheck).to.equal(true);
+        console.log("Teacher role checked")
+      })
 
+
+    // describe("Stakeholder", function () {
+
+    //   it('Should add stakeholder with board member role ', async function() {
+    //     await contract.addStakeHolder("Philip", owner.address, 1);
+    //     const stakeholderCheck = await contract.boardMemberCheck(owner.address);
+  
+    //     expect(stakeholderCheck).to.equal(true);
+    // })
+  });
+})
+});
