@@ -10,7 +10,7 @@ describe("Election", function() {
 
   beforeEach(async function () {
     const Election = await ethers.getContractFactory("Election");
-    const elction = await Election.deploy();
+    const election = await Election.deploy();
     contract = await election.deployed();
     
     [owner] = await ethers.getSigners();
@@ -34,28 +34,28 @@ describe("Election", function() {
 
     it("Should confirm the role of a stakeholder is boardmember", async function() {
       console.log("\n    ✅ confirming...\n");
-      const test = await contract.stakeholders[msg.sender].role;
+      const test = await contract.stakeholders.role;
       await sleep(5000); // wait 5 seconds for transaction to confirm!!
       expect(stakeholders[msg.sender].role).to.equal(0);
     });
 
   it("Should confirm the role of a stakeholder is Teacher", async function() {
     console.log("\n    ✅ confirming...\n");
-    const test = await contract.stakeholders[msg.sender].role;
+    const test = await contract.stakeholders.role;
     await sleep(5000); // wait 5 seconds for transaction to confirm!!
     expect(stakeholders[msg.sender].role).to.equal(1);
   });
 
 it("Should confirm the role of a stakeholder is student", async function() {
   console.log("\n    ✅ confirming...\n");
-  const test = await contract.stakeholders[msg.sender].role;
+  const test = await contract.stakeholders.role;
   await sleep(5000); // wait 5 seconds for transaction to confirm!!
   expect(stakeholders[msg.sender].role).to.equal(2);
 });
 
 it("Should confirm the role of a stakeholder is compiler", async function() {
   console.log("\n    ✅ confirming...\n");
-  const test = await contract.stakeholders[msg.sender].role;
+  const test = await contract.stakeholders.role;
   await sleep(5000); // wait 5 seconds for transaction to confirm!!
   expect(stakeholders[msg.sender].role).to.equal(0 || 1);
 });
