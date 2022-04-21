@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
-import { Box, Text, Image, Button, useColorModeValue} from "@chakra-ui/react"
+import { Box, Text, Image, Button } from "@chakra-ui/react"
+import {isStakeholder} from "../utils";
 
-const Home = () => {
+const Home = ({currentAccount}) => {
 	 const [ loading, setLoading ] = useState(false)
 	// const color = useColorModeValue("white", "black")
 	async function redirect(){
 		await window.location.assign("/dashboard")
 	}
-	const handlePolls = () => {
+
+	const stakeholderCheck = async() => {
+	    const res = await isStakeholder(window.ethereum, currentAccount);
+	    return res
+	  }
+		
+	const handlePolls = async() => {
+		const res = await stakeholderCheck()
 		setLoading(true);
-		setTimeout(redirect, 3000);		
+		res ? setTimeout(redirect, 3000) : alert("Sorry, you are not a stakeholder")
+		// setTimeout(redirect, 3000);		
 	}
+
     return (
     	loading === false ? (<Box d="flex" flexDirection={{base:"column-reverse", md:"row"}} px={{base:5, md:10}} py={10} mx="auto" justifyContent="space-between">
 	    	    		<Box w={{base:"100%", md:"40%"}} fontSize={{base:"3xl",md:"2xl",lg:"4xl"}} fontWeight="700" mt="50px" textAlign={{base:"center", md:"left"}}>

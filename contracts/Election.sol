@@ -78,8 +78,10 @@ contract Election is ERC20 {
     //mapping an address to the position they're contesting for
     mapping (address => mapping(string => bool)) public isContesting;
 
-    bool hasElectionStarted;
-    bool canStillExpressInterest = true;
+    bool public hasElectionStarted = false;
+    bool public isResultAnnounced = false;
+    //to show if people can start contesting
+    // bool canStillExpressInterest = false;
 
     //showInterestExpired modifier
 //     modifier showInterestExpired( bool requireExpired ) {
@@ -214,6 +216,14 @@ contract Election is ERC20 {
         //stakeholders[stakeHoldersCount] = holderDetails;
     }
 
+    // function to get the details of the signer 
+    function getStakeholderDetails() public view returns ( uint id, string memory name, address holder, uint role){
+        require(stakeHolderExists[msg.sender] == true, "This address is not a stakeholder");
+        Stakeholder memory p = stakeholders[msg.sender];
+        return (p.id, p.name, p.holder, p.role);
+
+    }
+
 
     /// @notice Tokens are needed to run certain functions
     /// @notice this function disperses tokens to the list of added stakeholders in one go.
@@ -285,6 +295,15 @@ contract Election is ERC20 {
         _showInterestStart = block.timestamp;
         _showInterestEnd = _showInterestDuration + _showInterestStart;
         hasElectionStarted = false;
+    }
+
+    // function to check if stakeholders can start contesting
+    function canStillExpressInterest() public  view returns (bool){
+        if(timeLefttoShowInterest() > 0){
+            return true;
+        } else{
+            return false;
+        }
     }
 
     /// @notice Function to show the time left to express interest
@@ -381,7 +400,7 @@ contract Election is ERC20 {
 
 
     /// @notice Function to compile results
-    function compileVotes() public view onlyCompiler returns(string[] memory,address[] memory, uint[] memory) {
+    function compileVotes() public view onlyCompiler onlyChairman returns(string[] memory,address[] memory, uint[] memory) {
         require(timeLeft() <= 0, "Election is still ongoing");
         uint len = votedFor.length;
 
@@ -396,6 +415,11 @@ contract Election is ERC20 {
         }
 
         return(categories, candidateId, votesGotten);
+    }
+
+    function makeResultsPublic() public onlyChairman returns(string[] memory,address[] memory, uint[] memory){
+            isResultAnnounced = true;
+            return compileVotes();
     }
 
 

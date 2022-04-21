@@ -100,7 +100,10 @@ function App() {
   });  
   
   useEffect (() => {
+    // setIsConnected(false);
+    checkIfWalletIsConnected();
     updateNetwork();
+
   }, [])
 
   return (
@@ -112,10 +115,11 @@ function App() {
             currentNetwork = {currentNetwork}
             toggleWallet={connectWallet}
           />
+
           <Banner/>
           <Routes>
-              <Route path="/" element={<Home/>}/>
-              <Route path="/dashboard" element={<Dashboard/>}/>
+              <Route path="/" element={<Home currentAccount={currentAccount}/>}/>
+              <Route path="/dashboard" element={<Dashboard currentAccount={currentAccount}/>}/>
               <Route path="/chairman" element={<Chairman/>}/>
               <Route path="/setvote" element={<SetVotingAndTime/>}/>
           </Routes>
