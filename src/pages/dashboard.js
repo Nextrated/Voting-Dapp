@@ -38,7 +38,6 @@ const Dashboard = ({currentAccount}) => {
 
 
     const contest = ()=> {
-        onClose()
         if (role === "Student"){
             toast({
                 title:"Sorry",
@@ -53,7 +52,6 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const announce = async() => {
-        onClose()
         const r = await isResultAnnounced(window.ethereum)
         if (r === false){
             toast({
@@ -69,7 +67,6 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const vote = async ()=> {
-        onClose()
         const r = await hasElectionStarted(window.ethereum)
         if (r === false){
             toast({
@@ -85,9 +82,9 @@ const Dashboard = ({currentAccount}) => {
 
     }
 
-    const showElectionDetails = () => {
-        onOpen();
-    }
+    // const showElectionDetails = () => {
+    //     onOpen();
+    // }
 
     return (
         <Box>
@@ -102,8 +99,8 @@ const Dashboard = ({currentAccount}) => {
             </Box>
             <Box d="flex" flexDirection={{base:"column", md:"row"}} px={{base:5, md:10}}>
                 <Box w={{base:"100%", md:"50%"}}>
-                    <Box d="flex" justifyContent="space-around" w="100%" flexWrap="wrap" flexDirection={{base:"column", md:"row"}} onClick={showElectionDetails}>
-                        <Box w={{base:"100%", md:"50%",lg:"40%"}} mx={{base:"auto", lg:"12px"}} h="auto" backdropFilter="auto" backdropBlur="8px" boxShadow="xl" color={color} textAlign="center" fontSize="4xl"  p={5} my={3} borderRadius="10px" border="0.4px solid orange" cursor="pointer" className="card">
+                    <Box d="flex" justifyContent="space-around" w="100%" flexWrap="wrap" flexDirection={{base:"column", md:"row"}}>
+                        <Box w={{base:"100%", md:"50%",lg:"40%"}} mx={{base:"auto", lg:"12px"}} h="auto" backdropFilter="auto" backdropBlur="8px" boxShadow="xl" color={color} textAlign="center" fontSize="4xl"  p={5} my={3} borderRadius="10px" border="0.4px solid orange" cursor="pointer" className="card" onClick={onOpen}>
                             <Flex mb={5} fontWeight="700">
                                 <Box mr={5}><FcViewDetails/></Box>
                                 <Text fontSize="xl">Election details</Text>
@@ -147,7 +144,8 @@ const Dashboard = ({currentAccount}) => {
                         
                 </Box>
             </Box>
-            <ElectionDetails onClose={onClose} isOpen={isOpen} />
+            <ElectionDetails isOpen={isOpen} onClose={onClose} />
+{/*            <ElectionDetails onClose={onClose} isOpen={isOpen} />*/}
         </Box>
   );
 };
