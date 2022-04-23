@@ -18,7 +18,7 @@ async function main() {
 
   console.log("Contract address is : ", contract.address)
   await contract.deployed()
-  const abi = fs.readFileSync(`src/artifacts/contracts/${contractName}.sol/${contractName}.json`);
+  const abi = fs.readFileSync(`./artifacts/contracts/${contractName}.sol/${contractName}.json`);
 
   // await fs.mkdir('.src/contracts', { recursive: true }, (err) => {
     // if (err) throw err;
