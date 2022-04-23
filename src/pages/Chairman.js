@@ -273,14 +273,16 @@ Student
 
         <Link to="/setvote">
           <Button my="4">
-            Set time and category for election
+            Set time and category for election 
           </Button>
         </Link>
+
 
         <Box mb="4">
           <Text fontSize="3xl">
             Dispatch tokens to stakeholders
           </Text>
+
           <form action="" onSubmit={handleSendTokens}>
             <FormLabel htmlFor="board-member">Board Member</FormLabel>
             <Input
@@ -314,7 +316,7 @@ Student
             />
 
 
-{isTokenSent === false
+            {isTokenSent === false
               ? <Button colorScheme="blue" mr={3} type="submit">
                   Send Tokens
                 </Button>
@@ -326,7 +328,8 @@ Student
                   loadingText="sending tokens"
                 >
                   Send Tokens
-                </Button>}
+                </Button>
+            }
           </form>
         </Box>
         <Box mb="4">
