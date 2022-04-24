@@ -289,6 +289,15 @@ contract Election is ERC20 {
         eligibleRole[_category] = _roleEligible;
     }
 
+    /// @notice function for resetting the categories to be voted for and roles eligible to contest
+    /// @param _category represents the category to be cleared
+    function resetVotingCategory(string calldata _category) public onlyChairman {
+        require(categorySet[_category] == true, "Category does not exist");
+        delete voteCategory;
+        delete categorySet[_category];
+        delete eligibleRole[_category];
+    }
+
     /// @notice Function to start the time-span for expressing interest
     /// @param _showInterestDuration represents the time in seconds allowed for expressing interest in a position
     function startShowInterest(uint _showInterestDuration) public onlyChairman {
