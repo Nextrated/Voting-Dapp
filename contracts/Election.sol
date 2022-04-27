@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
+import "./Roles.sol";
 
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+contract Voting is Roles {
 
-
-
-contract Election is ERC20 {
-    address public chairman;
-    
     /// @notice State variables used in setting the time-span of the election process
     uint _electionStart;
     uint _electionEnd;
@@ -19,11 +14,6 @@ contract Election is ERC20 {
     uint _showInterestEnd;
     uint showInterestDuration;
 
-    /// @notice State variables representing variables used to rep. roles
-    uint teacherID = 1;
-    uint boardMemberID = 0;
-    uint studentID = 2;
-
     /// @notice array to store voting categories
     string[] public voteCategory;
 
@@ -33,10 +23,7 @@ contract Election is ERC20 {
     mapping (string => uint) public roleEligible;
 
 
-    event DelegateChairman (address indexed to);
-    event Voted(address voteChoice, string Category);
-
-    //Model a candidate
+        //Model a candidate
     struct Candidate {
         uint id;
         string name;
@@ -44,35 +31,19 @@ contract Election is ERC20 {
         string category;
         uint voteCount;
     }
-    address[] public stakeholderList;
+  
 
-    //model a stakeHolder
-    struct Stakeholder {
-        uint id;
-        string name;
-        address holder;
-        uint role;
-    }
 
-    
+ 
     //store accounts that have voted
     mapping(address =>  mapping(string => bool)) public voters;
     address[] public votedFor;
-    
 
-
-    //Store & Fetch candidates
+        //Store & Fetch candidates
     mapping(address => Candidate) public candidates;
     //Store candidates count
     uint public candidatesCount;
 
-    /// @notice mapping an address to the Stakeholder structs, used to add stakeholders
-    mapping(address => Stakeholder) public stakeholders;
-    //store stakeHolders count
-    uint public stakeHoldersCount;
-
-    //checking if a stakeholder already exists
-    mapping (address => bool) public stakeHolderExists;
 
 
     //mapping an address to the position they're contesting for
@@ -80,203 +51,12 @@ contract Election is ERC20 {
 
     bool public hasElectionStarted = false;
     bool public isResultAnnounced = false;
-    //to show if people can start contesting
-    // bool canStillExpressInterest = false;
 
-    //showInterestExpired modifier
-//     modifier showInterestExpired( bool requireExpired ) {
-//     uint256 timeRemaining = timeLeft();
-//     if( requireExpired ) {
-//       require(timeRemaining <= 0, "Show Interest has Expired");
-//     } else {
-//       require(timeRemaining > 0, "Show Interest has not Expired");
-//     }
-//     _;
-//   }
+    event DelegateChairman (address indexed to);
+    event Voted(address voteChoice, string Category);
 
 
-    constructor() ERC20 ("ZuriToken", "ZET") {
-        _mint(msg.sender, 20000000 * 10 ** 18);
-        chairman = msg.sender;
-    }
-
-
-    modifier onlyChairman() {
-        require(msg.sender == chairman, "Only the chairman can perform this function");
-        _;
-    }
-
-    modifier onlyCompiler() {
-        require(isCompiler() == true, "Only a compiler can perform this function");
-        _;
-    }
-    modifier onlyStudent() {
-        require(isStudent() == true, "Only students can perform this function");
-        _;
-    }
-    modifier onlyTeacher() {
-        require(isTeacher() == true, "Only a teacher can perform this function");
-        _;
-    }
-    modifier onlyBoardMember() {
-        require(isBoardMember() == true, "Only a board member can perform this function");
-        _;
-    }
-    modifier onlyStakeholder() {
-        require(stakeHolderExists[msg.sender] == true, "Only a stakeholder do this");
-        _;
-    }
-
-
-    //checking if the current address is a board member
-    function isBoardMember() public view returns (bool) {
-        if (stakeholders[msg.sender].role == boardMemberID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    //checking if the current address is a teacher
-    function isTeacher() public view returns (bool) {
-        if (stakeholders[msg.sender].role == teacherID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    //checking if the current address is a student
-    function isStudent() public view returns (bool) {
-        if (stakeholders[msg.sender].role == studentID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    //checking if the current address is a teacher or board member
-    function isCompiler() public view returns (bool) {
-        if (stakeholders[msg.sender].role == boardMemberID || stakeholders[msg.sender].role == teacherID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /// @notice Check for verifying if an address is a teacher or board member
-    function compilerCheck(address _addr) public view returns (bool) {
-       if ((stakeholders[_addr].role == teacherID) || (stakeholders[_addr].role == boardMemberID)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /// @notice Check for verifying if an address is a board member
-    function boardMemberCheck(address _addr) public view returns (bool) {
-        if (stakeholders[_addr].role == boardMemberID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /// @notice Check for verifying if an address is a teacher
-    function teacherCheck(address _addr) public view returns (bool) {
-        if (stakeholders[_addr].role == teacherID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /// @notice Check for verifying if an address is a student
-    function studentshipCheck(address _addr) public view returns (bool) {
-        if (stakeholders[_addr].role == studentID) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
-    /// @notice Add stakeholders with their name, address and role.
-    /// @notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
-    /// @param  _name is the name of the person to add to stakeholders
-    /// @param  _holder The address of the person to add to stakeholders
-    /// @param _role represents the role of the person being in the organisation
-    function addStakeHolder (string memory _name, address _holder, uint _role) public onlyChairman {
-        require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
-        stakeHoldersCount ++;
-        Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name, _holder, _role); 
-        stakeholders[_holder] = holderDetails;
-        stakeHolderExists[_holder] = true;
-        stakeholderList.push(_holder);
-        //stakeholders[stakeHoldersCount] = holderDetails;
-    }
-
-    // function to get the details of the signer 
-    function getStakeholderDetails() public view returns ( uint id, string memory name, address holder, uint role){
-        require(stakeHolderExists[msg.sender] == true, "This address is not a stakeholder");
-        Stakeholder memory p = stakeholders[msg.sender];
-        return (p.id, p.name, p.holder, p.role);
-
-    }
-
-
-    /// @notice Tokens are needed to run certain functions
-    /// @notice this function disperses tokens to the list of added stakeholders in one go.
-    /// @param  boardMemberAmount is the amount to send to stakeholders with the board member roles
-    /// @param  teacherAmount is the amount to send to stakeholders with the teacher roles
-    /// @param  studentAmount is the amount to send to stakeholders with the student roles
-    function batchTransferToExistingStakeholders(uint boardMemberAmount, uint teacherAmount, uint studentAmount) external 
-    onlyChairman returns (bool transfered)
-    {
-        for(uint256 i = 0; i < stakeholderList.length; ++i) {
-            require(stakeholderList[i] != address(0), "Invalid Address");
-            require(stakeholderList.length <= 200, "exceeds number of allowed addressess");
-            address addr = stakeholderList[i];
-            
-            if(boardMemberCheck(addr) == true ) {
-                transfer(addr, boardMemberAmount*10**18);
-            } else if (teacherCheck(addr) == true) {
-                transfer(addr, teacherAmount*10**18);
-            } else if (studentshipCheck(addr) == true) {
-                transfer(addr, studentAmount*10**18);
-            } 
-        }
-        return(true);
-    }
-
-    // /// @notice Add stakeholders in a batch and send them tokens in one go
-    // /// @notice this function disperses tokens to the list of added stakeholders in one go.
-    // /// @param  _name name of the stakeholder
-    // /// @param  _holder address of the stakeholders to add
-    // /// @param  _role Roles represented by 0,1,2 of the respective stakeholders 
-    // /// @param _amounts Amount to send to respective stakeholders
-    // function batchTransferandAdd(string[] memory _name, address[] memory _holder, uint[] memory _role, uint[] calldata _amounts) external 
-    // onlyChairman returns ( bool)
-    // {
-    //     require(_holder.length == _amounts.length, "Invalid input parameters");
-    //     for(uint256 i = 0; i < _holder.length; i++) {
-    //         require(_holder[i] != address(0), "Invalid Address");
-    //         require(_amounts[i] != 0, "You cant't trasnfer 0 tokens");
-    //         require(_holder.length <= 200, "exceeds number of allowed addressess");
-    //         require(_amounts.length <= 200, "exceeds number of allowed amounts");
-            
-    //         //automatically add these addresses to stakeholders and their respective roles
-    //         stakeHoldersCount++;
-    //         Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name[i], _holder[i], _role[i]); 
-    //         stakeholders[_holder[i]] = holderDetails;
-    //         //transfer tokens to the addresses
-    //         require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Unable to transfer token to the account");
-
-    //     }
-    //     return(true);
-    // }
-
-    /// @notice mapping the category to the roles eligible to contest
+   /// @notice mapping the category to the roles eligible to contest
     mapping(string => uint) eligibleRole;
 
     /// @notice function for setting the categories to be voted for the roles eligible to contest
@@ -340,7 +120,7 @@ contract Election is ERC20 {
         require(stakeholders[msg.sender].role == eligibleRole[_category], "Not eligible to contest for this role" );
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_category] == false, "You have already shown interest in this position");
-        require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
+        //require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
 
         candidatesCount ++;
         candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _category, 0);
@@ -361,11 +141,11 @@ contract Election is ERC20 {
     /// @param newChairman represents the address to delegate chairmansgip to
     function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
         require(stakeHolderExists[newChairman] == true, "This address is not stakeholder at all");
-        require(compilerCheck(newChairman) == true, "Chairmanship role can't be granted : Not a teacher or board member");
-        require(studentshipCheck(newChairman) == false, "Chairmanship role can't be granted : Unauthorised address");
+        require(isCompiler(newChairman) == true, "Chairmanship role can't be granted : Not a teacher or board member");
+        require(isStudent(newChairman) == false, "Chairmanship role can't be granted : Unauthorised address");
         require(newChairman != address(0), "Invalid address");
 
-        chairman = newChairman;
+        //chairman = newChairman;
         
         emit DelegateChairman(newChairman);
 
@@ -397,7 +177,7 @@ contract Election is ERC20 {
         require(timeLeft() > 0, "Voting has ended");
         require(!voters[msg.sender][_category], "You have already voted in this category");
         require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
-        require(transfer(chairman, 50*10**18) , "You don't have enough tokens to vote");
+        //require(transfer(chairman, 50*10**18) , "You don't have enough tokens to vote");
 
         //require that candidate is valid
         //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
@@ -445,3 +225,5 @@ contract Election is ERC20 {
         return balanceOf(msg.sender);
     }
 }
+
+    
