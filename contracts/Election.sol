@@ -57,6 +57,7 @@ contract Election is Roles {
     // Category[] public contestants;
 
     struct Result {
+        string contestantCategory;
         address contestantAddr;
         uint contestantVoteCount;
     }
@@ -231,31 +232,43 @@ contract Election is Roles {
 
         votedFor.push(_candidate);
 
-        runnerUps.push(Result(contestant, voteCount));
+        runnerUps.push(Result(_category, contestant, voteCount));
         
         emit Voted(_candidate, _category);
     }
 
+    address[] candidatesCompiled;
+    uint[] votesCompiled;
+    string[] categoriesCompiled;
 
+    bool hasCompiled = false;
 
     /// @notice Function to compile results
-    function compileVotes() public view onlyCompiler returns(address[] memory, uint[] memory) {
+    function compileVotes() public onlyCompiler {
         require(timeLeft() <= 0, "Election is still ongoing");
         uint len = runnerUps.length;
 
         address [] memory candidateId = new address[](len);
         uint [] memory votesGotten  = new uint[](len);
+        string [] memory categoriesVoted = new string[](len);
         for (uint i = 0; i < len ; ++i ) {
             candidateId[i] = runnerUps[i].contestantAddr;
             votesGotten[i] = runnerUps[i].contestantVoteCount;
+            categoriesVoted[i] = runnerUps[i].contestantCategory;
         }
 
-        return(candidateId, votesGotten);
+        candidatesCompiled = candidateId;
+        votesCompiled = votesGotten;
+        categoriesCompiled = categoriesVoted;
+
+        hasCompiled = true;
     }
 
-    function makeResultsPublic() public onlyChairman returns(address[] memory, uint[] memory){
+    function makeResultsPublic() public onlyChairman returns(string[] memory, address[] memory, uint[] memory){
+        require(hasCompiled == true, "Results haven't been compiled");
+
         isResultAnnounced = true;
-        return compileVotes();
+        return (categoriesCompiled, candidatesCompiled, votesCompiled);
     }
 
 
