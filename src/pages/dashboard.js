@@ -13,10 +13,10 @@ import ContestAlert from '../components/ContestAlert';
 
 const Dashboard = ({currentAccount}) => {
     const [name, setName] = useState ('');
-    const [role, setRole] = useState ('');
+    const [role, setRole] = useState ([]);
     const [bal, setBal] = useState (0);
     const [roles, setRoles] = useState("");
-	const [eligibility, setEligibility] = useState("")
+	const [eligibility, setEligibility] = useState([])
     const color = useColorModeValue("black", "white");
     const toast = useToast();
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -45,7 +45,7 @@ const Dashboard = ({currentAccount}) => {
                     }
             });
     
-            getUserBalance(window.ethereum).then((res) => {
+            getUserBalance(window.ethereum, currentAccount).then((res) => {
                 const r = parseInt((res._hex), 16);
                 setBal(r / (10 ** 18));
             })
@@ -58,21 +58,28 @@ const Dashboard = ({currentAccount}) => {
         
       }, [bal, role, name, currentAccount, roles])
 
+    function convHex(hex){
+        return parseInt((hex._hex), 16);
+    }
+
     const getCategory =async () => {
         await getElectionCategory(window.ethereum).then(async res => {
             if(res[0].length !== 0){
-                await setRoles(res[0][0]);
-                const r = parseInt((res[1]._hex), 16);
-                if(r===0){
-                    await setEligibility("Board member")
-                } else if(r===1){
-                    await setEligibility("Teacher")
-                }else{
-                    await setEligibility("Student")
+                await setRoles(res[0]);
+                for(i=0; i<res[1].length; i++){
+                    var r= convHex(res[1][i]);
+                    if(r===0){
+                        await setEligibility([...eligibility,"Board member"])
+                    } else if(r===1){
+                        await setEligibility([...eligibility,"Teacher"])
+                    }else{
+                        await setEligibility([...eligibility,"Student"])
+                    }
                 }
+                
             } else{
-                setRoles("");
-                setEligibility("")
+                setRoles([]);
+                setEligibility([])
             }
         })
     }

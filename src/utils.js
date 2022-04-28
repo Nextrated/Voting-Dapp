@@ -13,8 +13,6 @@ const getSigner = async (ethereum) => {
     return provider.getSigner()
 }
 
-
-
 const getContract = async (ethereum) => {
     const signer = await getSigner(ethereum)
 
@@ -44,10 +42,10 @@ export const getUserDetails = async(ethereum) => {
     }
 }
 
-export const getUserBalance = async(ethereum) => {
+export const getUserBalance = async(ethereum,acc) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.getBalance()
+        const txnResult = contract.balanceOf(acc)
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)
@@ -79,7 +77,7 @@ export const isResultAnnounced = async(ethereum) => {
 export const hasElectionStarted = async(ethereum) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.hasElectionStarted();
+        const txnResult = contract.isElectionOn();
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)
@@ -109,7 +107,7 @@ export const castVote = async(ethereum, candidate, category) => {
 export const getCandidates = async(ethereum) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.candidates();
+        const txnResult = contract.getContestantDetails;
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)

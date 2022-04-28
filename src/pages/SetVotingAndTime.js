@@ -65,7 +65,7 @@ const SetVotingAndTime = () => {
             signer
           );
           const setCategoryTxn = await sendCategory.setVotingCategory (
-            category, role
+            category, parseInt(role)
           );
           await setCategoryTxn.wait ();
           setSubmitted ('successful!');
@@ -112,11 +112,11 @@ const SetVotingAndTime = () => {
       const category = await contract.getCurrentCategory();
       const getRole = String(category[1]);
 
-      if (getRole === "0") {
+      if (getRole === 0) {
         setEligibleRole("Board Member");
-      } else if (getRole === "1") {
+      } else if (getRole === 1) {
         setEligibleRole("Teacher")
-      } else if (getRole === "2") {
+      } else if (getRole === 2) {
         setEligibleRole("Student")
       }
 
