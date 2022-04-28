@@ -6,49 +6,93 @@ import { GoFileSubmodule } from 'react-icons/go';
 import { FcViewDetails } from 'react-icons/fc';
 import { SiOpslevel } from 'react-icons/si';
 import { BiSad } from 'react-icons/bi';
-import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced } from "../utils";
+import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced, isStakeholder, getElectionCategory } from "../utils";
 import ElectionDetails  from "../components/ElectionDetails";
+import VoteModal  from "../components/VoteModal";
+import ContestAlert from '../components/ContestAlert';
 
 const Dashboard = ({currentAccount}) => {
     const [name, setName] = useState ('');
     const [role, setRole] = useState ('');
     const [bal, setBal] = useState (0);
+    const [roles, setRoles] = useState("");
+	const [eligibility, setEligibility] = useState("")
     const color = useColorModeValue("black", "white");
     const toast = useToast();
-    const { isOpen, onOpen, onClose} = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { 
+        isOpen : isContestOpen,
+        onOpen: onContestOpen,
+        onClose: onContestClose} = useDisclosure();
+
+    const { 
+        isOpen : isVoteOpen,
+        onOpen: onVoteOpen,
+        onClose: onVoteClose} = useDisclosure();
+		
     useEffect (() => {
-        getUserDetails(window.ethereum).then((res) => {
-            console.log(res)
-                setName(res.name);
-                const r = parseInt((res.role._hex), 16);
-                if(r===0){
-                    setRole("Board member")
-                } else if(r===1){
-                    setRole("Teacher")
-                }else{
-                    setRole("Student")
-                }
-        });
-
-        getUserBalance(window.ethereum).then((res) => {
-            const r = parseInt((res._hex), 16);
-            setBal(r / (10 ** 18));
-        })
-      }, [bal, role, name])
-
-
-    const contest = ()=> {
-        if (role === "Student"){
-            toast({
-                title:"Sorry",
-                description:"You are not eligible to contest",
-                status:"error",
-                duration: 5000,
-                isClosable:true
+        if(isStakeholder(window.ethereum, currentAccount)){
+            getUserDetails(window.ethereum).then((res) => {
+                // console.log(res)
+                    setName(res.name);
+                    const r = parseInt((res.role._hex), 16);
+                    if(r===0){
+                        setRole("Board member")
+                    } else if(r===1){
+                        setRole("Teacher")
+                    }else{
+                        setRole("Student")
+                    }
             });
+    
+            getUserBalance(window.ethereum).then((res) => {
+                const r = parseInt((res._hex), 16);
+                setBal(r / (10 ** 18));
+            })
+
+            getCategory();
         } else{
-            return;
+            window.location.assign("/")
         }
+            
+        
+      }, [bal, role, name, currentAccount, roles])
+
+    const getCategory =async () => {
+        await getElectionCategory(window.ethereum).then(async res => {
+            if(res[0].length !== 0){
+                await setRoles(res[0][0]);
+                const r = parseInt((res[1]._hex), 16);
+                if(r===0){
+                    await setEligibility("Board member")
+                } else if(r===1){
+                    await setEligibility("Teacher")
+                }else{
+                    await setEligibility("Student")
+                }
+            } else{
+                setRoles("");
+                setEligibility("")
+            }
+        })
+    }
+
+
+    const contest = () => {
+        getCategory().then(()=> {
+             if (role !== eligibility){
+                toast({
+                    title:"Sorry",
+                    description:"You are not eligible to contest",
+                    status:"error",
+                    duration: 5000,
+                    isClosable:true
+                });
+            } else{
+                onContestOpen();
+            }
+        })
+       
     }
 
     const announce = async() => {
@@ -77,14 +121,10 @@ const Dashboard = ({currentAccount}) => {
                 isClosable:true
             });
         } else{
-            return;
+            onVoteOpen()
         }
 
     }
-
-    // const showElectionDetails = () => {
-    //     onOpen();
-    // }
 
     return (
         <Box>
@@ -145,6 +185,8 @@ const Dashboard = ({currentAccount}) => {
                 </Box>
             </Box>
             <ElectionDetails isOpen={isOpen} onClose={onClose} />
+            <ContestAlert role={roles} name={name} isOpen={isContestOpen} onClose={onContestClose}/>
+            <VoteModal category={roles} isOpen={isVoteOpen} onClose={onVoteClose}/>
         </Box>
   );
 };

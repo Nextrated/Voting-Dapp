@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
-import { Box, Text, Image, Button } from "@chakra-ui/react"
+import { Box, Text, Image, Button, useToast } from "@chakra-ui/react"
 import {isStakeholder} from "../utils";
 
 const Home = ({currentAccount}) => {
 	 const [ loading, setLoading ] = useState(false)
-	// const color = useColorModeValue("white", "black")
-	async function redirect(){
-		await window.location.assign("/dashboard")
+	 const toast = useToast();
+
+	function redirect(){
+		window.location.assign("/dashboard")
+	}
+
+	function error(){
+		setLoading(false)
+		toast({
+			title:"Sorry",
+			description:"You are not a member of Zuri Organization",
+			status:"error",
+			duration: 5000,
+			isClosable:true
+		});
+		console.log("not a stakeholder")
 	}
 
 	const stakeholderCheck = async() => {
@@ -16,8 +29,8 @@ const Home = ({currentAccount}) => {
 		
 	const handlePolls = async() => {
 		const res = await stakeholderCheck()
-		setLoading(true);
-		res ? setTimeout(redirect, 3000) : alert("Sorry, you are not a stakeholder")
+		setLoading(true)
+		res ? setTimeout(redirect, 3000) : setTimeout(error, 3000)
 		// setTimeout(redirect, 3000);		
 	}
 
