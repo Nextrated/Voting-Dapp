@@ -1,9 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {
-  FormControl,
   FormLabel,
-  FormErrorMessage,
-  FormHelperText,
   Input,
   Box,
   Text,
@@ -18,13 +15,14 @@ import {ethers} from 'ethers'
 
 import contractAddress from '../contracts/contract_address.json'
 import abi from '../contracts/abi.json';
-
+import {startContestTime, startElectionTime} from "../utils"
 
 const SetVotingAndTime = () => {
     const toast = useToast ();
     const [categoryDescription, setCategoryDescription] = useState('')
     const [eligibility, setEligibility] = useState('');
     const [interestTime, setInterestTime] = useState('');
+    const [electionTime, setElectionTime] = useState('');
     const [submitted, setSubmitted] = useState ('');
     const [isCategorySet, setIsCategorySet] = useState (false);
     const [currentCategory, setCurrentCategory] = useState({
@@ -48,6 +46,12 @@ const SetVotingAndTime = () => {
       //console.log("tymeee", time)
     }
 
+    const handleElectionTime = (e) => {
+      const time = e.target.value;
+      setElectionTime(time);
+      //console.log("tymeee", time)
+    }
+
 
     const sendCategory = async (category, role) => {
       try {
@@ -61,7 +65,7 @@ const SetVotingAndTime = () => {
             signer
           );
           const setCategoryTxn = await sendCategory.setVotingCategory (
-            category, role
+            category, parseInt(role)
           );
           await setCategoryTxn.wait ();
           setSubmitted ('successful!');
@@ -108,11 +112,11 @@ const SetVotingAndTime = () => {
       const category = await contract.getCurrentCategory();
       const getRole = String(category[1]);
 
-      if (getRole === "0") {
+      if (getRole === 0) {
         setEligibleRole("Board Member");
-      } else if (getRole === "1") {
+      } else if (getRole === 1) {
         setEligibleRole("Teacher")
-      } else if (getRole === "2") {
+      } else if (getRole === 2) {
         setEligibleRole("Student")
       }
 
@@ -123,6 +127,58 @@ const SetVotingAndTime = () => {
       console.log(category);
       console.log("category",category[0]);
       console.log("role",String(category[1]))
+    }
+
+    const setContestTime = (e) => {
+      e.preventDefault();
+      startContestTime(Number(interestTime), window.ethereum).then(()=> {
+        setInterestTime("")
+        toast ({
+              title: 'Successfull',
+              description: `Contest time is set`,
+              status: 'success',
+              duration: '5000',
+              isClosable: true,
+            });
+      }).catch(r => {
+            setInterestTime("")
+            let x = r.toString().split("}")[0].split("{")[1].replace(',"data":', "")
+            x = JSON.parse(`{${x}}`)
+            toast({
+                title:"Sorry",
+                description:x.message,
+                status:"error",
+                duration: 5000,
+                isClosable:true
+            });
+        })
+
+    }
+
+    const setVotingDuration = (e) => {
+      e.preventDefault();
+      startElectionTime(Number(electionTime), window.ethereum).then(()=> {
+        setElectionTime("")
+        toast ({
+              title: 'Successfull',
+              description: `Election time is set`,
+              status: 'success',
+              duration: '5000',
+              isClosable: true,
+            });
+      }).catch(r => {
+            setElectionTime("")
+            let x = r.toString().split("}")[0].split("{")[1].replace(',"data":', "")
+            x = JSON.parse(`{${x}}`)
+            toast({
+                title:"Sorry",
+                description:x.message,
+                status:"error",
+                duration: 5000,
+                isClosable:true
+            });
+        })
+
     }
 
     useEffect(() => {
@@ -174,13 +230,28 @@ const SetVotingAndTime = () => {
         </form>
 
 
-          <form my="4" action="">
+          <form action="" onSubmit={setContestTime}>
             <FormLabel> Set Time for contestsants to show interest (in seconds)</FormLabel>
             <Input type="number" 
               onChange={handleTime} 
               min="0"
             />
+            <Button colorScheme="blue"
+                  mr={3}
+                  type="submit">Set time</Button>
           </form>
+
+          <form action="" onSubmit={setVotingDuration}>
+            <FormLabel> Set Time for everyone to vote(in seconds)</FormLabel>
+            <Input type="number" 
+              onChange={handleElectionTime} 
+              min="0"
+            />
+            <Button colorScheme="blue"
+                  mr={3}
+                  type="submit">Set time</Button>
+          </form>
+
 
           <div>
             <p> <strong>Category:</strong> {currentCategory.category[0]}</p>

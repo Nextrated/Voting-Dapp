@@ -6,54 +6,103 @@ import { GoFileSubmodule } from 'react-icons/go';
 import { FcViewDetails } from 'react-icons/fc';
 import { SiOpslevel } from 'react-icons/si';
 import { BiSad } from 'react-icons/bi';
-import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced } from "../utils";
+import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced, isStakeholder, getElectionCategory } from "../utils";
 import ElectionDetails  from "../components/ElectionDetails";
+import VoteModal  from "../components/VoteModal";
+import ContestAlert from '../components/ContestAlert';
 
 const Dashboard = ({currentAccount}) => {
     const [name, setName] = useState ('');
-    const [role, setRole] = useState ('');
+    const [role, setRole] = useState ([]);
     const [bal, setBal] = useState (0);
+    const [roles, setRoles] = useState("");
+	const [eligibility, setEligibility] = useState([])
     const color = useColorModeValue("black", "white");
     const toast = useToast();
-    const { isOpen, onOpen, onClose} = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { 
+        isOpen : isContestOpen,
+        onOpen: onContestOpen,
+        onClose: onContestClose} = useDisclosure();
+
+    const { 
+        isOpen : isVoteOpen,
+        onOpen: onVoteOpen,
+        onClose: onVoteClose} = useDisclosure();
+		
     useEffect (() => {
-        getUserDetails(window.ethereum).then((res) => {
-            console.log(res)
-                setName(res.name);
-                const r = parseInt((res.role._hex), 16);
-                if(r===0){
-                    setRole("Board member")
-                } else if(r===1){
-                    setRole("Teacher")
-                }else{
-                    setRole("Student")
-                }
-        });
-
-        getUserBalance(window.ethereum).then((res) => {
-            const r = parseInt((res._hex), 16);
-            setBal(r / (10 ** 18));
-        })
-      }, [bal, role, name])
-
-
-    const contest = ()=> {
-        //onClose()
-        if (role === "Student"){
-            toast({
-                title:"Sorry",
-                description:"You are not eligible to contest",
-                status:"error",
-                duration: 5000,
-                isClosable:true
+        if(isStakeholder(window.ethereum, currentAccount)){
+            getUserDetails(window.ethereum).then((res) => {
+                // console.log(res)
+                    setName(res.name);
+                    const r = parseInt((res.role._hex), 16);
+                    if(r===0){
+                        setRole("Board member")
+                    } else if(r===1){
+                        setRole("Teacher")
+                    }else{
+                        setRole("Student")
+                    }
             });
+    
+            getUserBalance(window.ethereum, currentAccount).then((res) => {
+                const r = parseInt((res._hex), 16);
+                setBal(r / (10 ** 18));
+            })
+
+            getCategory();
         } else{
-            return;
+            window.location.assign("/")
         }
+            
+        
+      }, [bal, role, name, currentAccount, roles])
+
+    function convHex(hex){
+        return parseInt((hex._hex), 16);
+    }
+
+    const getCategory =async () => {
+        await getElectionCategory(window.ethereum).then(async res => {
+            if(res[0].length !== 0){
+                await setRoles(res[0]);
+                for(i=0; i<res[1].length; i++){
+                    var r= convHex(res[1][i]);
+                    if(r===0){
+                        await setEligibility([...eligibility,"Board member"])
+                    } else if(r===1){
+                        await setEligibility([...eligibility,"Teacher"])
+                    }else{
+                        await setEligibility([...eligibility,"Student"])
+                    }
+                }
+                
+            } else{
+                setRoles([]);
+                setEligibility([])
+            }
+        })
+    }
+
+
+    const contest = () => {
+        getCategory().then(()=> {
+             if (role !== eligibility){
+                toast({
+                    title:"Sorry",
+                    description:"You are not eligible to contest",
+                    status:"error",
+                    duration: 5000,
+                    isClosable:true
+                });
+            } else{
+                onContestOpen();
+            }
+        })
+       
     }
 
     const announce = async() => {
-       // onClose()
         const r = await isResultAnnounced(window.ethereum)
         if (r === false){
             toast({
@@ -69,7 +118,6 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const vote = async ()=> {
-        // onClose()
         const r = await hasElectionStarted(window.ethereum)
         if (r === false){
             toast({
@@ -80,13 +128,9 @@ const Dashboard = ({currentAccount}) => {
                 isClosable:true
             });
         } else{
-            return;
+            onVoteOpen()
         }
 
-    }
-
-    const showElectionDetails = () => {
-        onOpen();
     }
 
     return (
@@ -102,8 +146,8 @@ const Dashboard = ({currentAccount}) => {
             </Box>
             <Box d="flex" flexDirection={{base:"column", md:"row"}} px={{base:5, md:10}}>
                 <Box w={{base:"100%", md:"50%"}}>
-                    <Box d="flex" justifyContent="space-around" w="100%" flexWrap="wrap" flexDirection={{base:"column", md:"row"}} onClick={showElectionDetails}>
-                        <Box w={{base:"100%", md:"50%",lg:"40%"}} mx={{base:"auto", lg:"12px"}} h="auto" backdropFilter="auto" backdropBlur="8px" boxShadow="xl" color={color} textAlign="center" fontSize="4xl"  p={5} my={3} borderRadius="10px" border="0.4px solid orange" cursor="pointer" className="card">
+                    <Box d="flex" justifyContent="space-around" w="100%" flexWrap="wrap" flexDirection={{base:"column", md:"row"}}>
+                        <Box w={{base:"100%", md:"50%",lg:"40%"}} mx={{base:"auto", lg:"12px"}} h="auto" backdropFilter="auto" backdropBlur="8px" boxShadow="xl" color={color} textAlign="center" fontSize="4xl"  p={5} my={3} borderRadius="10px" border="0.4px solid orange" cursor="pointer" className="card"  onClick={onOpen}>
                             <Flex mb={5} fontWeight="700">
                                 <Box mr={5}><FcViewDetails/></Box>
                                 <Text fontSize="xl">Election details</Text>
@@ -147,7 +191,9 @@ const Dashboard = ({currentAccount}) => {
                         
                 </Box>
             </Box>
-            {/* <ElectionDetails onClose={onClose} isOpen={isOpen} /> */}
+            <ElectionDetails isOpen={isOpen} onClose={onClose} />
+            <ContestAlert role={roles} name={name} isOpen={isContestOpen} onClose={onContestClose}/>
+            <VoteModal category={roles} isOpen={isVoteOpen} onClose={onVoteClose}/>
         </Box>
   );
 };
