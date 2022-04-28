@@ -8,6 +8,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract Roles is ERC20, AccessControl {
 
+    address public chairmanAddr;
+    event DelegateChairman (address indexed from, address indexed to);
+
+
     bytes32 public constant CHAIRMAN_ROLE = keccak256("CHAIRMAN");
     bytes32 public constant BOARD_MEMBER_ROLE = keccak256("BOARD_MEMBER");
     bytes32 public constant TEACHER_ROLE = keccak256("TEACHER");
@@ -41,6 +45,7 @@ contract Roles is ERC20, AccessControl {
 
     constructor() ERC20 ("ZuriToken", "ZET") {
         _mint(msg.sender, 20000000 * 10 ** 18);
+        chairmanAddr = msg.sender;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setRoleAdmin(CHAIRMAN_ROLE, DEFAULT_ADMIN_ROLE);
         grantRole(CHAIRMAN_ROLE, msg.sender);
@@ -68,7 +73,7 @@ contract Roles is ERC20, AccessControl {
 
     //checking if the current address is a teacher or board member
     function isCompiler(address account) public view returns (bool) {
-        if (hasRole(BOARD_MEMBER_ROLE, account) || hasRole(TEACHER_ROLE, account)) {
+        if (hasRole(CHAIRMAN_ROLE, account) || hasRole(BOARD_MEMBER_ROLE, account) || hasRole(TEACHER_ROLE, account)) {
             return true;
         } else {
             return false;
@@ -81,19 +86,19 @@ contract Roles is ERC20, AccessControl {
     }
 
     modifier onlyCompiler() {
-        require(isCompiler(msg.sender) == true, "Only a compiler can perform this function");
+        require(isCompiler(msg.sender) == true, "Restricted to compiler");
         _;
     }
     modifier onlyStudent() {
-        require(isStudent(msg.sender) == true, "Only students can perform this function");
+        require(isStudent(msg.sender) == true, "Restricted to student");
         _;
     }
     modifier onlyTeacher() {
-        require(isTeacher(msg.sender) == true, "Only a teacher can perform this function");
+        require(isTeacher(msg.sender) == true, "Restricted to teacher");
         _;
     }
     modifier onlyBoardMember() {
-        require(isBoardMember(msg.sender) == true, "Only a board member can perform this function");
+        require(isBoardMember(msg.sender) == true, "Restricted to member");
         _;
     }
     modifier onlyStakeholder() {
@@ -102,11 +107,11 @@ contract Roles is ERC20, AccessControl {
     }
 
 
-    /// @notice Add stakeholders with their name, address and role.
-    /// @notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
-    /// @param  _name is the name of the person to add to stakeholders
-    /// @param  _holder The address of the person to add to stakeholders
-    /// @param _role represents the role of the person being in the organisation
+   /// @notice Add stakeholders with their name, address and role.
+   /// @notice 0 means Board Member role, 1 means a Teacher Role, 2 Means a student role
+   /// @param  _name is the name of the person to add to stakeholders
+   /// @param  _holder The address of the person to add to stakeholders
+   /// @param _role represents the role of the person being in the organisation
     function addStakeHolder (string memory _name, address _holder, uint _role) public onlyChairman {
         require(stakeHolderExists[_holder] == false, "This address is already a stakeholder");
         stakeHoldersCount ++;
@@ -128,7 +133,7 @@ contract Roles is ERC20, AccessControl {
 
     // function to get the details of the signer 
     function getStakeholderDetails() public view returns ( uint id, string memory name, address holder, uint role){
-        require(stakeHolderExists[msg.sender] == true, "This address is not a stakeholder");
+        require(stakeHolderExists[msg.sender] == true, "Not a stakeholder");
         Stakeholder memory p = stakeholders[msg.sender];
         return (p.id, p.name, p.holder, p.role);
 
@@ -171,9 +176,9 @@ contract Roles is ERC20, AccessControl {
         require(_holder.length == _amounts.length, "Invalid input parameters");
         for(uint256 i = 0; i < _holder.length; i++) {
             require(_holder[i] != address(0), "Invalid Address");
-            require(_amounts[i] != 0, "You cant't trasnfer 0 tokens");
-            require(_holder.length <= 200, "exceeds number of allowed addressess");
-            require(_amounts.length <= 200, "exceeds number of allowed amounts");
+            require(_amounts[i] != 0);
+            require(_holder.length <= 200);
+            require(_amounts.length <= 200);
             
             //automatically add these addresses to stakeholders and their respective roles
             stakeHoldersCount++;
@@ -187,11 +192,31 @@ contract Roles is ERC20, AccessControl {
 
             Stakeholder memory holderDetails = Stakeholder(stakeHoldersCount ,_name[i], _holder[i], _role[i]); 
             stakeholders[_holder[i]] = holderDetails;
+            stakeHolderExists[_holder[i]] = true;
+            stakeholderList.push(_holder[i]);
             //transfer tokens to the addresses
-            require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Unable to transfer token to the account");
+            require(transfer(_holder[i], _amounts[i]* 10 ** 18), "Failed");
 
         }
         return(true);
+    }
+
+       
+    /// @notice Delegating the chairman role to another stakeholder
+    /// @param newChairman represents the address to delegate chairmansgip to
+    function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
+        require(stakeHolderExists[newChairman] == true, "Not a stakeholder");
+        require(isCompiler(newChairman) == true, "not eligible");
+        require(isStudent(newChairman) == false, " Unauthorised address");
+        require(newChairman != address(0), "Invalid address");
+
+        grantRole(CHAIRMAN_ROLE, newChairman);
+
+        // ---we're still testing so we can have multiple chairmen, but for prod, uncomment the code below
+        //revokeRole(CHAIRMAN_ROLE,  msg.sender);
+        emit DelegateChairman(msg.sender , newChairman);
+
+        return(true); 
     }
 
 }
