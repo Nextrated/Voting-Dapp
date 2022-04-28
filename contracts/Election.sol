@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 import "./Roles.sol";
 
-contract Voting is Roles {
+contract Election is Roles {
 
     /// @notice State variables used in setting the time-span of the election process
     uint _electionStart;
@@ -15,13 +15,16 @@ contract Voting is Roles {
     uint showInterestDuration;
 
     /// @notice array to store voting categories
-    string[] public voteCategory;
+    //string[] public voteCategory;
 
     /// @notice mapping to ensure a categoty has been set
     mapping (string => bool) public categorySet;
     /// @notice mapping to bind the category to the role eligible to contest for it
     mapping (string => uint) public roleEligible;
 
+    event ElectionEvent (uint indexed start, uint indexed duration);
+    event Contest (string indexed name, address indexed contestant, string indexed category);
+    
 
         //Model a candidate
     struct Candidate {
@@ -31,12 +34,37 @@ contract Voting is Roles {
         string category;
         uint voteCount;
     }
-  
 
+    //model of a candidate that has expressed interest
+    struct Contestant {
+        string name;
+        address addr;
+        string category;
+    }
+    Contestant[] public contestants;
 
- 
+    struct Voter {
+        bool voted;
+        address voteChoice;
+    }
+
+    //model of category -- the category name and the role eligible to contest
+    struct Category {
+        string name;
+        uint role;
+    }
+    Category[] public category;
+    // Category[] public contestants;
+
+    struct Result {
+        address contestantAddr;
+        uint contestantVoteCount;
+    }
+
+    Result[] public runnerUps;
+
     //store accounts that have voted
-    mapping(address =>  mapping(string => bool)) public voters;
+    mapping(address =>  mapping(string => Voter)) public voters;
     address[] public votedFor;
 
         //Store & Fetch candidates
@@ -49,7 +77,6 @@ contract Voting is Roles {
     //mapping an address to the position they're contesting for
     mapping (address => mapping(string => bool)) public isContesting;
 
-    bool public hasElectionStarted = false;
     bool public isResultAnnounced = false;
 
     event DelegateChairman (address indexed to);
@@ -64,7 +91,7 @@ contract Voting is Roles {
     /// @param _roleEligible represents the role eligible for contesting
     /// @dev function can only be called by the chairman
     function setVotingCategory(string calldata _category, uint _roleEligible)  public onlyChairman{
-        voteCategory.push(_category);
+        category.push(Category(_category, _roleEligible));
         categorySet[_category] = true;
         eligibleRole[_category] = _roleEligible;
     }
@@ -73,7 +100,7 @@ contract Voting is Roles {
     /// @param _category represents the category to be cleared
     function resetVotingCategory(string calldata _category) public onlyChairman {
         require(categorySet[_category] == true, "Category does not exist");
-        delete voteCategory;
+        // delete voteCategory;
         delete categorySet[_category];
         delete eligibleRole[_category];
     }
@@ -83,7 +110,6 @@ contract Voting is Roles {
     function startShowInterest(uint _showInterestDuration) public onlyChairman {
         _showInterestStart = block.timestamp;
         _showInterestEnd = _showInterestDuration + _showInterestStart;
-        hasElectionStarted = false;
     }
 
     // function to check if stakeholders can start contesting
@@ -100,10 +126,13 @@ contract Voting is Roles {
        return _showInterestEnd >= block.timestamp ? _showInterestEnd - block.timestamp : 0;
     }
 
-    function getCurrentCategory() public view returns(string[] memory, uint) {
-        uint role;
-        for (uint i = 0 ; i < voteCategory.length ; ++i) {
-            role = eligibleRole[voteCategory[i]];
+    function getCurrentCategory() public view returns(string[] memory, uint[] memory roles) {
+        uint len = category.length;
+        string[] memory voteCategory = new string[](len);
+        uint [] memory role= new uint[](len);
+        for (uint i = 0 ; i < len ; ++i) {
+           voteCategory[i] = category[i].name;
+           role[i] = category[i].role;
         }
         return (voteCategory, role);
     }
@@ -115,11 +144,11 @@ contract Voting is Roles {
     /// @return returns an unsigned integer representing the uiniqueID of this candidate
     function expressInterest(string calldata _name, string calldata _category) public 
     onlyStakeholder returns(uint){
-        require(timeLefttoShowInterest() > 0, "Time up: This position is no more accepting candidates");
-        require(categorySet[_category] == true, "Voting Category has not been set yet");
-        require(stakeholders[msg.sender].role == eligibleRole[_category], "Not eligible to contest for this role" );
+        require(timeLefttoShowInterest() > 0, "time up");
+        require(categorySet[_category] == true, "category invalid");
+        require(stakeholders[msg.sender].role == eligibleRole[_category], "Inelligible to contest" );
         require(msg.sender != address(0), "invalid address");
-        require(isContesting[msg.sender][_category] == false, "You have already shown interest in this position");
+        require(isContesting[msg.sender][_category] == false, "Already shown interest in this position");
         //require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
 
         candidatesCount ++;
@@ -127,37 +156,36 @@ contract Voting is Roles {
 
         isContesting[msg.sender][_category] = true;
 
+        contestants.push(Contestant(_name, msg.sender, _category));
+
+        emit Contest (_name , msg.sender, _category);
         //since we're suggesting using candidate count to vote, the contestant should know their count
         return (candidatesCount);
     }
 
-    // /// @notice gets the candidate id of the current stakeholder provided they're a contestant
-    // function getCandidateID() public view returns(uint) {
-    //     return candidates[msg.sender].id;
-    // }
+    function getContestantDetails() public view returns(string[] memory, address [] memory, string [] memory ) {
+        uint len = contestants.length;
 
-   
-    /// @notice Delegating the chairman role to another stakeholder
-    /// @param newChairman represents the address to delegate chairmansgip to
-    function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
-        require(stakeHolderExists[newChairman] == true, "This address is not stakeholder at all");
-        require(isCompiler(newChairman) == true, "Chairmanship role can't be granted : Not a teacher or board member");
-        require(isStudent(newChairman) == false, "Chairmanship role can't be granted : Unauthorised address");
-        require(newChairman != address(0), "Invalid address");
+        string [] memory name = new string[](len);
+        address [] memory addr  = new address[](len);
+        string [] memory contestCategory = new string[](len);
 
-        //chairman = newChairman;
-        
-        emit DelegateChairman(newChairman);
+        for (uint i = 0; i < len ; ++i ) {
+            name[i] = contestants[i].name;
+            addr[i] = contestants[i].addr;
+            contestCategory[i] = contestants[i].category;
+        }
 
-        return(true); 
+        return(name, addr, contestCategory);
     }
-
+   
     /// @notice Function to start the voting process
     /// @param _electionDuration represents the time in seconds allowed for the voting process
     function startElection(uint _electionDuration) public onlyChairman {
         _electionStart = block.timestamp;
         _electionEnd = _electionDuration + _electionStart;
-        hasElectionStarted = true;
+
+        emit ElectionEvent (_electionStart, _electionDuration);
     }
 
     /// @notice Function to show the time left to vote
@@ -166,64 +194,72 @@ contract Voting is Roles {
        return _electionEnd >= block.timestamp ? _electionEnd - block.timestamp : 0;
     }
 
+    // function to check if stakeholders can start vote
+    function isElectionOn() public  view returns (bool){
+        if(timeLeft() > 0){
+            return true;
+        } else{
+            return false;
+        }
+    }
+
 
     /// @notice Function to place votes, only runnable by a stakeholder
     /// @param _candidate represents the address of the candidate a staeholder wishes to vote for
     /// @param _category represents the category the stakeholder wishes to place their vote in
     function placeVote(address _candidate, string calldata _category) public onlyStakeholder
     {
-        require(hasElectionStarted == true, "Election hasn't started");
-        require(categorySet[_category] == true, "Voting for this category will not be taking place right now");
+        require(isElectionOn() == true, "Election hasn't started");
+        require(categorySet[_category] == true, "voting hasn't begun");
         require(timeLeft() > 0, "Voting has ended");
-        require(!voters[msg.sender][_category], "You have already voted in this category");
-        require(isContesting[_candidate][_category] == true, "Invalid address: Not a contestant");
+        require(!voters[msg.sender][_category].voted, "already voted");
+        require(isContesting[_candidate][_category] == true, "address not a contestant");
         //require(transfer(chairman, 50*10**18) , "You don't have enough tokens to vote");
 
         //require that candidate is valid
         //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
 
         //record that voter has voted
-        voters[msg.sender][_category] = true;
+        voters[msg.sender][_category].voted = true;
+        voters[msg.sender][_category].voteChoice = _candidate;
+        
 
         //update candidate vote count
-        candidates[_candidate].voteCount++;
-        candidates[_candidate].contestant = _candidate;
+        uint  voteCount =  candidates[_candidate].voteCount += 1;
+        address contestant = candidates[_candidate].contestant = _candidate;
         candidates[_candidate].category = _category;
 
         votedFor.push(_candidate);
+
+        runnerUps.push(Result(contestant, voteCount));
         
         emit Voted(_candidate, _category);
     }
 
 
-    /// @notice Function to compile results
-    function compileVotes() public view onlyCompiler onlyChairman returns(string[] memory,address[] memory, uint[] memory) {
-        require(timeLeft() <= 0, "Election is still ongoing");
-        uint len = votedFor.length;
 
-        string[] memory categories = new string[](len);
+    /// @notice Function to compile results
+    function compileVotes() public view onlyCompiler returns(address[] memory, uint[] memory) {
+        require(timeLeft() <= 0, "Election is still ongoing");
+        uint len = runnerUps.length;
+
         address [] memory candidateId = new address[](len);
         uint [] memory votesGotten  = new uint[](len);
         for (uint i = 0; i < len ; ++i ) {
-            address key = votedFor[i]; 
-            categories[i] = candidates[key].category;           
-            candidateId[i] = candidates[key].contestant;
-            votesGotten[i] = candidates[key].voteCount;
+            candidateId[i] = runnerUps[i].contestantAddr;
+            votesGotten[i] = runnerUps[i].contestantVoteCount;
         }
 
-        return(categories, candidateId, votesGotten);
+        return(candidateId, votesGotten);
     }
 
-    function makeResultsPublic() public onlyChairman returns(string[] memory,address[] memory, uint[] memory){
-            isResultAnnounced = true;
-            return compileVotes();
+    function makeResultsPublic() public onlyChairman returns(address[] memory, uint[] memory){
+        isResultAnnounced = true;
+        return compileVotes();
     }
 
 
-    /// @notice function to get the token balance of the current stakeholder
-    function getBalance() public view returns(uint) {
-        return balanceOf(msg.sender);
-    }
+
 }
 
     
