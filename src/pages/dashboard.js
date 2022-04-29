@@ -63,25 +63,25 @@ const Dashboard = ({currentAccount}) => {
     }
 
     const getCategory =async () => {
-        await getElectionCategory(window.ethereum).then(async res => {
-            if(res[0].length !== 0){
-                await setRoles(res[0]);
-                for(i=0; i<res[1].length; i++){
-                    var r= convHex(res[1][i]);
-                    if(r===0){
-                        await setEligibility([...eligibility,"Board member"])
-                    } else if(r===1){
-                        await setEligibility([...eligibility,"Teacher"])
-                    }else{
-                        await setEligibility([...eligibility,"Student"])
-                    }
-                }
+        // await getElectionCategory(window.ethereum).then(async res => {
+        //     if(res[0].length !== 0){
+        //         await setRoles(res[0]);
+        //         for(i=0; i<res[1].length; i++){
+        //             var r= convHex(res[1][i]);
+        //             if(r===0){
+        //                 await setEligibility([...eligibility,"Board member"])
+        //             } else if(r===1){
+        //                 await setEligibility([...eligibility,"Teacher"])
+        //             }else{
+        //                 await setEligibility([...eligibility,"Student"])
+        //             }
+        //         }
                 
-            } else{
-                setRoles([]);
-                setEligibility([])
-            }
-        })
+        //     } else{
+        //         setRoles([]);
+        //         setEligibility([])
+        //     }
+        // })
     }
 
 
