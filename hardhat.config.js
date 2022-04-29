@@ -16,7 +16,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-const defaultNetwork = "rinkeby"
+const defaultNetwork = "hardhat"
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -36,6 +36,8 @@ module.exports = {
   },
   defaultNetwork: `${defaultNetwork}`,
   networks: {
+    hardhat: {
+    },
     rinkeby: {
       url: STAGING_ALCHEMY_KEY,
       accounts: [PRIVATE_KEY],
