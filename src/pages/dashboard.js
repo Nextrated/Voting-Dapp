@@ -13,10 +13,12 @@ import ContestAlert from '../components/ContestAlert';
 
 const Dashboard = ({currentAccount}) => {
     const [name, setName] = useState ('');
-    const [role, setRole] = useState ([]);
+    const [role, setRole] = useState ("");
     const [bal, setBal] = useState (0);
-    const [roles, setRoles] = useState("");
+    const [roles, setRoles] = useState([]);
 	const [eligibility, setEligibility] = useState([])
+    const [category, setCategory] = useState([]);
+    const [eligibleCategory, setEligibleCategory] = useState([]);
     const color = useColorModeValue("black", "white");
     const toast = useToast();
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -29,6 +31,33 @@ const Dashboard = ({currentAccount}) => {
         isOpen : isVoteOpen,
         onOpen: onVoteOpen,
         onClose: onVoteClose} = useDisclosure();
+
+    function getEligibleCategory(arr){
+        let newArr = []
+        for(let i=0; i< arr.length; i++){
+            if(arr[i].eligibility === role){
+                newArr.push(arr[i])
+            }
+        }
+        setEligibleCategory(newArr);
+    }
+
+    function parseCategory(arr1, arr2){
+        if(arr1.length === 0){
+            setCategory([])
+        } else{
+            let newArr = [];
+            for(let i=0; i< arr1.length; i++){
+                let obj = {
+                    role: arr1[i],
+                    eligibility: arr2[i]
+                }
+                newArr.push(obj);
+            }
+            setCategory(newArr);
+        }
+        
+    }
 		
     useEffect (() => {
         if(isStakeholder(window.ethereum, currentAccount)){
@@ -66,7 +95,7 @@ const Dashboard = ({currentAccount}) => {
         await getElectionCategory(window.ethereum).then(async res => {
             if(res[0].length !== 0){
                 await setRoles(res[0]);
-                for(i=0; i<res[1].length; i++){
+                for(let i=0; i<res[1].length; i++){
                     var r= convHex(res[1][i]);
                     if(r===0){
                         await setEligibility([...eligibility,"Board member"])
@@ -80,22 +109,24 @@ const Dashboard = ({currentAccount}) => {
             } else{
                 setRoles([]);
                 setEligibility([])
-            }
+            } 
+            parseCategory(roles, eligibility);
         })
     }
 
 
     const contest = () => {
         getCategory().then(()=> {
-             if (role !== eligibility){
+             if (eligibility.includes(role) === false){
                 toast({
                     title:"Sorry",
-                    description:"You are not eligible to contest",
+                    description:"You are not eligible to contest for any of the available positions",
                     status:"error",
                     duration: 5000,
                     isClosable:true
                 });
             } else{
+                getEligibleCategory(category);
                 onContestOpen();
             }
         })
@@ -192,8 +223,8 @@ const Dashboard = ({currentAccount}) => {
                 </Box>
             </Box>
             <ElectionDetails isOpen={isOpen} onClose={onClose} />
-            <ContestAlert role={roles} name={name} isOpen={isContestOpen} onClose={onContestClose}/>
-            <VoteModal category={roles} isOpen={isVoteOpen} onClose={onVoteClose}/>
+            <ContestAlert role={eligibleCategory} name={name} isModalOpen={isContestOpen} onModalClose={onContestClose}/>
+            <VoteModal category={category} isOpen={isVoteOpen} onClose={onVoteClose} roles={roles}/>
         </Box>
   );
 };

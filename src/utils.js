@@ -107,7 +107,7 @@ export const castVote = async(ethereum, candidate, category) => {
 export const getCandidates = async(ethereum) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.getContestantDetails;
+        const txnResult = contract.getContestantDetails();
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)
