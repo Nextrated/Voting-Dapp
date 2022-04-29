@@ -80,7 +80,6 @@ contract Election is Roles {
 
     bool public isResultAnnounced = false;
 
-    event DelegateChairman (address indexed to);
     event Voted(address voteChoice, string Category);
 
 
