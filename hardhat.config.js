@@ -16,7 +16,9 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-const defaultNetwork = "hardhat"
+// const defaultNetwork = "hardhat"
+const defaultNetwork = "rinkeby"
+
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
