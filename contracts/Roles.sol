@@ -10,6 +10,7 @@ contract Roles is ERC20, AccessControl {
 
     address public chairmanAddr;
     event DelegateChairman (address indexed from, address indexed to);
+    event DelegateRemoval (address indexed removed);
 
 
     bytes32 public constant CHAIRMAN_ROLE = keccak256("CHAIRMAN");
@@ -73,7 +74,7 @@ contract Roles is ERC20, AccessControl {
 
     //checking if the current address is a teacher or board member
     function isCompiler(address account) public view returns (bool) {
-        if (hasRole(CHAIRMAN_ROLE, account) || hasRole(BOARD_MEMBER_ROLE, account) || hasRole(TEACHER_ROLE, account)) {
+        if (hasRole(BOARD_MEMBER_ROLE, account) || hasRole(TEACHER_ROLE, account)) {
             return true;
         } else {
             return false;
@@ -207,16 +208,18 @@ contract Roles is ERC20, AccessControl {
     function delegateChairmanship(address newChairman) public onlyChairman returns(bool changed){
         require(stakeHolderExists[newChairman] == true, "Not a stakeholder");
         require(isCompiler(newChairman) == true, "not eligible");
-        require(isStudent(newChairman) == false, " Unauthorised address");
-        require(newChairman != address(0), "Invalid address");
 
         grantRole(CHAIRMAN_ROLE, newChairman);
-
-        // ---we're still testing so we can have multiple chairmen, but for prod, uncomment the code below
-        //revokeRole(CHAIRMAN_ROLE,  msg.sender);
         emit DelegateChairman(msg.sender , newChairman);
 
         return(true); 
+    }
+
+    function removeDelegate(address account) public onlyChairman {
+        require(hasRole(CHAIRMAN_ROLE, account) == true, "address isn't a delegate");
+        revokeRole(CHAIRMAN_ROLE, account);
+
+        emit DelegateRemoval (account);
     }
 
 }
