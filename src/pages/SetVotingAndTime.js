@@ -39,6 +39,8 @@ const SetVotingAndTime = () => {
   const [electionTime, setElectionTime] = useState ('');
   const [submitted, setSubmitted] = useState ('');
   const [isCategorySet, setIsCategorySet] = useState (false);
+  const [votingDurations, setVotingDurations] = useState(false);
+  const [contestingDuration, setContestingDuration] = useState(false);
   const [currentCategory, setCurrentCategory] = useState ({
     category: '',
     role: '',
@@ -152,9 +154,11 @@ const SetVotingAndTime = () => {
 
   const setContestTime = e => {
     e.preventDefault ();
+    setContestingDuration(true)
     startContestTime (Number (interestTime), window.ethereum)
       .then (() => {
         setInterestTime ('');
+        setContestingDuration(false)
         toast ({
           title: 'Successfull',
           description: `Contest time is set`,
@@ -183,9 +187,11 @@ const SetVotingAndTime = () => {
 
   const setVotingDuration = e => {
     e.preventDefault ();
+    setVotingDurations(true)
     startElectionTime (Number (electionTime), window.ethereum)
       .then (() => {
         setElectionTime ('');
+        setVotingDurations(false)
         toast ({
           title: 'Successfull',
           description: `Election time is set`,
@@ -396,9 +402,19 @@ const SetVotingAndTime = () => {
                   </FormLabel>
                   <Input type="number" onChange={handleTime} min="0" placeholder='Enter time' required/>
                   <ModalFooter>
-                    <Button colorScheme="blue" mr={3} type="submit">
-                      Set time
-                    </Button>
+                  {contestingDuration === false
+                      ? <Button colorScheme="blue" mr={3} type="submit">
+                           Set time
+                        </Button>
+                      : <Button
+                          colorScheme="blue"
+                          mr={3}
+                          type="submit"
+                          isLoading
+                          loadingText="setting contesting duration"
+                        >
+                          Set time
+                        </Button>}
                     <Button onClick={onShowInterestClose}>Cancel</Button>
                   </ModalFooter>
 
@@ -457,9 +473,19 @@ const SetVotingAndTime = () => {
                   <FormLabel> Set Time for vote</FormLabel>
                   <Input type="number" onChange={handleElectionTime} min="0" placeholder='Set time' required/>
                   <ModalFooter>
-                    <Button colorScheme="blue" mr={3} type="submit">
-                      Set time
-                    </Button>
+                  {votingDurations === false
+                      ? <Button colorScheme="blue" mr={3} type="submit">
+                           Set time
+                        </Button>
+                      : <Button
+                          colorScheme="blue"
+                          mr={3}
+                          type="submit"
+                          isLoading
+                          loadingText="setting voting duration"
+                        >
+                          Set time
+                        </Button>}
                     <Button onClick={onSetTimeClose}>Cancel</Button>
                   </ModalFooter>
 
