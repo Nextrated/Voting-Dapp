@@ -177,6 +177,7 @@ describe("expressInterest", function() {
     expect(d).to.equal(contract.eligibleRole);
     await contract.isContesting;
     await contract.candidatesCount;
+    return contract.candidatesCount;
     
 });
 });
