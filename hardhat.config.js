@@ -16,7 +16,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-// const defaultNetwork = "hardhat"
+//const defaultNetwork = "hardhat"
 const defaultNetwork = "rinkeby"
 
 
