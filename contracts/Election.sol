@@ -80,7 +80,6 @@ contract Election is Roles {
 
     bool public isResultAnnounced = false;
 
-    event DelegateChairman (address indexed to);
     event Voted(address voteChoice, string Category);
 
 
@@ -242,6 +241,8 @@ contract Election is Roles {
         }
     }
 
+
+    /// @notice array for compiled results, that are private
     address[] candidatesCompiled;
     uint[] votesCompiled;
     string[] categoriesCompiled;
@@ -269,11 +270,20 @@ contract Election is Roles {
         hasCompiled = true;
     }
 
+    /// @notice array for public results
+    address[] public candidatesResultCompiled;
+    uint[] public votesResultCompiled;
+    string[] public categoriesResultCompiled;
+
+    /// @notice making results public everywhere outside the contract as well
     function makeResultsPublic() public onlyChairman returns(string[] memory, address[] memory, uint[] memory){
         require(hasCompiled == true, "Results haven't been compiled");
 
         isResultAnnounced = true;
-        return (categoriesCompiled, candidatesCompiled, votesCompiled);
+        categoriesResultCompiled = categoriesCompiled;
+        candidatesResultCompiled = candidatesCompiled;
+        votesResultCompiled = votesCompiled;
+        return (categoriesResultCompiled, candidatesResultCompiled, votesResultCompiled);
     }
 
 

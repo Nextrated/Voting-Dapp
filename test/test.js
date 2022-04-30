@@ -181,8 +181,8 @@ describe("expressInterest", function() {
     
 });
 });
-
-describe("getContestantDetails", function() {
+  
+  describe("getContestantDetails", function() {
   it("Gets the details of the contestants", async function() {
     await contract.getContestantDetails();
     const test = await contract.contestants.length
@@ -191,10 +191,9 @@ describe("getContestantDetails", function() {
     const contestCategory = await contract.contestants.category;
     return(name, addr, contestCategory);
   });
-
-});
-
-describe("StartElection", function() {
+  });
+  
+  describe("StartElection", function() {
   it("Start the timer to allow stakeholders to vote for contestants", async function() {
   let showInterestDuration = 120
   const b = await contract.timeLefttoShowInterest;
@@ -207,4 +206,5 @@ describe("StartElection", function() {
 
 });
 });
+
 });
