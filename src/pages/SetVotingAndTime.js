@@ -29,7 +29,7 @@ import {ethers} from 'ethers';
 import contractAddress from '../contracts/contract_address.json';
 import abi from '../contracts/abi.json';
 import {startContestTime, startElectionTime} from '../utils';
-import {InfoIcon, RepeatClockIcon, TimeIcon} from '@chakra-ui/icons';
+import {InfoIcon, RepeatClockIcon, RepeatIcon, TimeIcon} from '@chakra-ui/icons';
 
 const SetVotingAndTime = () => {
   const toast = useToast ();
@@ -40,7 +40,9 @@ const SetVotingAndTime = () => {
   const [submitted, setSubmitted] = useState ('');
   const [isCategorySet, setIsCategorySet] = useState (false);
   const [votingDurations, setVotingDurations] = useState(false);
+  const [isReset, setIsReset] = useState(false)
   const [contestingDuration, setContestingDuration] = useState(false);
+  const [resetElection, setResetElection] = useState('')
   const [currentCategory, setCurrentCategory] = useState ({
     category: '',
     role: '',
@@ -235,6 +237,67 @@ const SetVotingAndTime = () => {
     onOpen: onSetTimeOpen,
     onClose: onSetTimeClose,
   } = useDisclosure ();
+
+  const {
+    isOpen: setResetOpen,
+    onOpen: onResetOpen,
+    onClose: onResetClose,
+  } = useDisclosure ();
+
+  const resetElectionCategory = async category => {
+    try {
+      const {ethereum} = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider (ethereum);
+        const signer = provider.getSigner ();
+        const resetElectionContract = new ethers.Contract (
+          contractAddress.contractAddress,
+          abi.abi,
+          signer
+        );
+        const resetElectionTxn = await resetElectionContract.resetVotingCategory (
+          category
+        );
+        await resetElectionTxn.wait ();
+        setSubmitted ('successful!');
+        setResetElection ('');
+        setIsReset(false)
+
+        setTimeout (() => {
+          setSubmitted ('');
+          onResetClose ();
+          toast ({
+            title: 'Successfull',
+            description: `election resetted successfully`,
+            status: 'success',
+            duration: '5000',
+            isClosable: true,
+          });
+        }, 1000);
+      } else {
+        onResetClose ();
+        setIsReset(false)
+        setSubmitted ('');
+        showErrorToast ('Please ensure you are connected to metamask');
+        console.log ('ethereum object does not exist!');
+      }
+    } catch (error) {
+      onResetClose ();
+      setSubmitted ('');
+      showErrorToast ('An unexpected error occured');
+      console.log (error);
+    }
+  };
+
+
+
+
+const handleReset = (e) => {
+  e.preventDefault()
+  setIsReset(true)
+  resetElectionCategory(resetElection)
+}
+
 
   useEffect (() => {
     getCurrentCategory ();
@@ -495,6 +558,79 @@ const SetVotingAndTime = () => {
             </ModalContent>
 
           </Modal>
+
+        </GridItem>
+
+        <GridItem>
+        <Box onClick={onResetOpen} cursor="pointer">
+
+<Box
+  maxW={'445px'}
+  h="250"
+  w={'full'}
+  bg={useColorModeValue ('white', 'grey.900')}
+  boxShadow={'2xl'}
+  rounded={'md'}
+  p={6}
+  overflow={'hidden'}
+>
+  <RepeatIcon fontSize="3xl" mb="5" color='purple'/>
+  <Stack>
+    <Heading
+      color={useColorModeValue ('gray.700', 'white')}
+      fontSize={'2xl'}
+    >
+      Reset Election
+    </Heading>
+    <Text color={'gray.500'}>
+      The chairman has the power to reset the categories to be voted for and roles eligible to contest
+      {' '}
+
+    </Text>
+  </Stack>
+</Box>
+</Box>
+
+<Modal
+initialFocusRef={initialRef}
+finalFocusRef={finalRef}
+isOpen={setResetOpen}
+onClose={onResetClose}
+>
+<ModalOverlay />
+<ModalContent>
+  <ModalHeader mt='5'>
+    Reset Election
+  </ModalHeader>
+  <ModalCloseButton />
+  <ModalBody pb={6}>
+
+    <form action="" onSubmit={handleReset}>
+      <FormLabel> Reset Election</FormLabel>
+      <Input type="text" onChange={e => setResetElection(e.target.value)} min="0" placeholder='Enter category' required/>
+      <ModalFooter>
+      {isReset === false
+          ? <Button colorScheme="blue" mr={3} type="submit">
+               Reset Election
+            </Button>
+          : <Button
+              colorScheme="blue"
+              mr={3}
+              type="submit"
+              isLoading
+              loadingText="Resetting election"
+            >
+              Reset Election
+            </Button>}
+        <Button onClick={onResetClose}>Cancel</Button>
+      </ModalFooter>
+
+    </form>
+  </ModalBody>
+
+</ModalContent>
+
+</Modal>
 
         </GridItem>
 
