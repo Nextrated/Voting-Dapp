@@ -22,7 +22,7 @@ import {
     useDisclosure,
     ModalCloseButton } from '@chakra-ui/react'
 import React, {useState} from 'react'
-import { showInterest } from '../utils';
+import { showInterest, getUserBalance } from '../utils';
 
 const Alert = ({isOpen, cancelRef, onClose, choiceRole, contest, loading}) => {
         return (
@@ -47,18 +47,28 @@ const Alert = ({isOpen, cancelRef, onClose, choiceRole, contest, loading}) => {
         )
     }
 
-export default function ContestAlert({isModalOpen, onModalClose,role, name}) {
+export default function ContestAlert({isModalOpen, onModalClose,role, name, resetBal, currentAccount}) {
     const [choiceRole, setChoiceRole] = useState("");
     const [loading, setLoading] = useState(false);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const cancelRef= React.useRef();
     const toast = useToast();
 
+    const getBal = () => {
+        let  bal;
+        getUserBalance(window.ethereum, currentAccount).then((res) => {
+                const r = parseInt((res._hex), 16);
+                bal =  r/(10 ** 18);
+            })
+        return bal;
+    }
+
     const contest = () => {
         setLoading(true)
         showInterest(name,choiceRole, window.ethereum).then(r=> {
             setLoading(false);
             onClose();
+            resetBal(getBal)
             toast({
                 title:"Congratulations",
                 description:"Your wish to contest has been successfully noted",
@@ -66,6 +76,7 @@ export default function ContestAlert({isModalOpen, onModalClose,role, name}) {
                 duration: 5000,
                 isClosable:true
             });
+
         }).catch(r => {
             setLoading(false);
              onClose();

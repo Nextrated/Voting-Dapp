@@ -144,12 +144,13 @@ contract Election is Roles {
     /// @return returns an unsigned integer representing the uiniqueID of this candidate
     function expressInterest(string calldata _name, string calldata _category) public 
     onlyStakeholder returns(uint){
+        require(hasRole(CHAIRMAN_ROLE, msg.sender) == false, "Chairman cannot express interest");
         require(timeLefttoShowInterest() > 0, "time up");
         require(categorySet[_category] == true, "category invalid");
         require(stakeholders[msg.sender].role == eligibleRole[_category], "Inelligible to contest" );
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_category] == false, "Already shown interest in this position");
-        //require(transfer(chairman, 150*10**18) , "You don't have enough tokens to express interest");
+        require(transfer(chairmanAddr, 150*10**18) , "You don't have enough tokens to express interest");
 
         candidatesCount ++;
         candidates[msg.sender] = Candidate(candidatesCount, _name, msg.sender, _category, 0);
@@ -182,6 +183,7 @@ contract Election is Roles {
     /// @notice Function to start the voting process
     /// @param _electionDuration represents the time in seconds allowed for the voting process
     function startElection(uint _electionDuration) public onlyChairman {
+        require(timeLefttoShowInterest() <= 0, "Contestant's still expressing interest");
         _electionStart = block.timestamp;
         _electionEnd = _electionDuration + _electionStart;
 
@@ -207,35 +209,40 @@ contract Election is Roles {
     /// @notice Function to place votes, only runnable by a stakeholder
     /// @param _candidate represents the address of the candidate a staeholder wishes to vote for
     /// @param _category represents the category the stakeholder wishes to place their vote in
-    function placeVote(address _candidate, string calldata _category) public onlyStakeholder
+    function placeVote(address[] memory _candidate, string[] memory _category) public onlyStakeholder
     {
-        require(isElectionOn() == true, "Election hasn't started");
-        require(categorySet[_category] == true, "voting hasn't begun");
         require(timeLeft() > 0, "Voting has ended");
-        require(!voters[msg.sender][_category].voted, "already voted");
-        require(isContesting[_candidate][_category] == true, "address not a contestant");
-        //require(transfer(chairman, 50*10**18) , "You don't have enough tokens to vote");
+        require(isElectionOn() == true, "Election hasn't started");
+        require(transfer(chairmanAddr, 50*10**18) , "You don't have enough tokens to vote");
 
         //require that candidate is valid
         //require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate");
 
-        //record that voter has voted
-        voters[msg.sender][_category].voted = true;
-        voters[msg.sender][_category].voteChoice = _candidate;
-        
+        for(uint256 i = 0; i < contestants.length; ++i) {
+            require(categorySet[_category[i]] == true, "voting hasn't begun");
+            require(!voters[msg.sender][_category[i]].voted, "already voted");
+            require(isContesting[_candidate[i]][_category[i]] == true, "address not a contestant");
 
-        //update candidate vote count
-        uint  voteCount =  candidates[_candidate].voteCount += 1;
-        address contestant = candidates[_candidate].contestant = _candidate;
-        candidates[_candidate].category = _category;
+            //record that voter has voted
+            voters[msg.sender][_category[i]].voted = true;
+            voters[msg.sender][_category[i]].voteChoice = _candidate[i];
 
-        votedFor.push(_candidate);
+            //update candidate vote count
+            uint  voteCount =  candidates[_candidate[i]].voteCount += 1;
+            address contestant = candidates[_candidate[i]].contestant = _candidate[i];
+            candidates[_candidate[i]].category = _category[i];
 
-        runnerUps.push(Result(_category, contestant, voteCount));
-        
-        emit Voted(_candidate, _category);
+            votedFor.push(_candidate[i]);
+
+            runnerUps.push(Result(_category[i], contestant, voteCount));
+
+            emit Voted(_candidate[i], _category[i]);
+
+        }
     }
 
+
+    /// @notice array for compiled results, that are private
     address[] candidatesCompiled;
     uint[] votesCompiled;
     string[] categoriesCompiled;
@@ -263,11 +270,20 @@ contract Election is Roles {
         hasCompiled = true;
     }
 
+    /// @notice array for public results
+    address[] public candidatesResultCompiled;
+    uint[] public votesResultCompiled;
+    string[] public categoriesResultCompiled;
+
+    /// @notice making results public everywhere outside the contract as well
     function makeResultsPublic() public onlyChairman returns(string[] memory, address[] memory, uint[] memory){
         require(hasCompiled == true, "Results haven't been compiled");
 
         isResultAnnounced = true;
-        return (categoriesCompiled, candidatesCompiled, votesCompiled);
+        categoriesResultCompiled = categoriesCompiled;
+        candidatesResultCompiled = candidatesCompiled;
+        votesResultCompiled = votesCompiled;
+        return (categoriesResultCompiled, candidatesResultCompiled, votesResultCompiled);
     }
 
 

@@ -16,19 +16,31 @@ import {Modal,
   useToast,
   Divider,
 } from "@chakra-ui/react";
-import { getCandidates, castVote } from "../utils";
+import { getCandidates, castVote, getUserBalance } from "../utils";
 
-const VoteModal = ({isOpen, onClose, roles}) => {
+const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
 	const [loading, setLoading] = useState(false);
 	const [candidates, setCandidates] = useState([])
 	const [choiceCandidateForRole, setChoiceCandidateForRole] = useState({choiceAddr:"",post:""})
 
   const toast = useToast();
+
+  const getBal = () => {
+        let bal;
+        getUserBalance(window.ethereum, currentAccount).then((res) => {
+                const r = parseInt((res._hex), 16);
+                bal =  r/(10 ** 18);
+            })
+        return bal;
+    }
+
+
 	const submitVote = () => {
     setLoading(true)
 		console.log(choiceCandidateForRole)
     castVote(window.ethereum, choiceCandidateForRole.choiceAddr, choiceCandidateForRole.post).then( ()=> {
       setLoading(false);
+          resetBal(getBal)
             onClose();
             toast({
                 title:"Congratulations",

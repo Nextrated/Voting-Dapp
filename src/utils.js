@@ -184,6 +184,18 @@ export const announceResults = async(ethereum) => {
     }
 }
 
+export const getPublicResults = async(ethereum) => {
+    try {
+        const contract = await getContract(ethereum)
+        const cand = contract.candidatesResultsCompiled();
+        const vote = contract.votesResultsCompiled();
+        const cat = contract.categoriesResultsCompiled();
+        return [cand,vote, cat];
+    } catch(error) {
+        console.log(error.message)
+    }
+}
+
 
 
 

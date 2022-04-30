@@ -114,6 +114,97 @@ describe("Election contract", function() {
         ,"\n\t", "and eligible contestants should be of the role -->", roleEligible)
       })
     })
+});
+
+describe("resetCategory", function() {
+  it("Should reset voting category", async function() {
+    
+    await contract.setVotingCategory("president", 0);
+    const currentCategory = await contract.getCurrentCategory();
+    const categorySet = currentCategory[0][2]
+    const roleSet = String(currentCategory[1][2]);
+    const test = delete categorySet;
+    const test2 = delete roleSet;
+    expect(categorySet).to.equal(undefined);
+    expect(roleSet).to.equal("undefined");
+    
+
+  })
+})
+describe("StartShowInterest", function() {
+  it("Start the timer to allow stakeholders to show interest", async function() {
+  let showInterestDuration = 30
+  let blocktimestamp = 0
+  let showInterestStart = blocktimestamp
+  showInterestEnd = showInterestDuration + showInterestStart;
+  const test = await showInterestEnd
+  expect(test).to.equal(30);
 
 });
+});
+describe("canStillExpressInterest", function() {
+  it("Checks to confirm if stakeholders can still express interest", async function() {
+    let showInterestDuration = 30
+    let blocktimestamp = 0
+    let showInterestStart = blocktimestamp
+    showInterestEnd = showInterestDuration + showInterestStart;
+    if(showInterestEnd > blocktimestamp){
+      return true;
+  } else{
+      return false;
+  }
+  expect(showInterestEnd).to.equal(true);
+});
+});
+
+describe("getCurrentCategory", function() {
+  it("Gets the current category", async function() {
+    await contract.getCurrentCategory();
+    const test = await contract.category.length
+    const votecategory = await contract.categorySet;
+    const role = await contract.eligibleRole
+    return(votecategory, role);
+});
+});
+describe("expressInterest", function() {
+  it("allows stakeholders to express interest for an election post", async function() {
+    await contract.expressInterest;
+    await contract.isCompiler || isStudent;
+    const b = await contract.timeLefttoShowInterest;
+    expect(b).to.be > 0;
+    await contract.categorySet;
+    const d = await contract.stakeholders.role;
+    expect(d).to.equal(contract.eligibleRole);
+    await contract.isContesting;
+    await contract.candidatesCount;
+    return contract.candidatesCount;
+    
+});
+});
+  
+  describe("getContestantDetails", function() {
+  it("Gets the details of the contestants", async function() {
+    await contract.getContestantDetails();
+    const test = await contract.contestants.length
+    const name = await contract.contestants.name;
+    const addr = await contract.contestants.addr;
+    const contestCategory = await contract.contestants.category;
+    return(name, addr, contestCategory);
+  });
+  });
+  
+  describe("StartElection", function() {
+  it("Start the timer to allow stakeholders to vote for contestants", async function() {
+  let showInterestDuration = 120
+  const b = await contract.timeLefttoShowInterest;
+    expect(b).to.be < 0;
+  let blocktimestamp = 0
+  let electionStart = blocktimestamp
+  electionEnd = showInterestDuration + electionStart;
+  const test = await electionEnd
+  expect(test).to.equal(120);
+
+});
+});
+
 });

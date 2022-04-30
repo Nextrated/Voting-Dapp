@@ -117,6 +117,10 @@ const Dashboard = ({currentAccount}) => {
         })
     }
 
+    const resetBal = (bal) => {
+        setBal(bal)
+    }
+
 
     const contest = () => {
         getCategory().then(()=> {
@@ -266,8 +270,8 @@ const Dashboard = ({currentAccount}) => {
                 </Box>
             </Flex>
             <ElectionDetails isOpen={isOpen} onClose={onClose} />
-            <ContestAlert role={eligibleCategory} name={name} isModalOpen={isContestOpen} onModalClose={onContestClose}/>
-            <VoteModal category={category} isOpen={isVoteOpen} onClose={onVoteClose} roles={roles}/>
+            <ContestAlert role={eligibleCategory} name={name} isModalOpen={isContestOpen} onModalClose={onContestClose} resetBal={resetBal} currentAccount={currentAccount}/>
+            <VoteModal category={category} isOpen={isVoteOpen} onClose={onVoteClose} roles={roles} resetBal={resetBal} currentAccount={currentAccount}/>
         </Box>) : 
         (<Box w="100%">
             <Image src="compiling.gif" htmlWidth="75%" mx="auto"/>   
