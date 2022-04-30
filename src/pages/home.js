@@ -31,7 +31,6 @@ const Home = ({currentAccount}) => {
 		const res = await stakeholderCheck()
 		setLoading(true)
 		res ? setTimeout(redirect, 3000) : setTimeout(error, 3000)
-		// setTimeout(redirect, 3000);		
 	}
 
     return (

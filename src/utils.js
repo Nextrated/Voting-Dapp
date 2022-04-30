@@ -32,6 +32,16 @@ export const isStakeholder = async (ethereum, account) => {
     }
 }
 
+export const isChairman = async (ethereum, account) => {
+    try {
+        const contract = await getContract(ethereum)
+        const txnResult = contract.isChairman(account)
+        return txnResult;
+    } catch(error) {
+        console.log("Error: ", error)
+    }
+}
+
 export const getUserDetails = async(ethereum) => {
     try {
         const contract = await getContract(ethereum)
@@ -148,6 +158,26 @@ export const startElectionTime = async(time,ethereum) => {
     try {
         const contract = await getContract(ethereum)
         const txnResult = contract.startElection(time)
+        return txnResult;
+    } catch(error) {
+        console.log(error.message)
+    }
+}
+
+export const compileResults = async(ethereum) => {
+    try {
+        const contract = await getContract(ethereum)
+        const txnResult = contract.compileVotes()
+        return txnResult;
+    } catch(error) {
+        console.log(error.message)
+    }
+}
+
+export const announceResults = async(ethereum) => {
+    try {
+        const contract = await getContract(ethereum)
+        const txnResult = contract.makeResultsPublic()
         return txnResult;
     } catch(error) {
         console.log(error.message)

@@ -81,7 +81,7 @@ const Chairman = () => {
       title: 'Unsuccessful',
       description: message,
       status: 'error',
-      duration: '5000',
+      duration: 5000,
       isClosable: true,
     });
   };
@@ -110,9 +110,9 @@ const Chairman = () => {
           onAddStakeholderClose ();
           toast ({
             title: 'Successfull',
-            description: `File uploaded successfully`,
+            description: `Stakeholder uploaded successfully`,
             status: 'success',
-            duration: '5000',
+            duration: 5000,
             isClosable: true,
           });
         }, 1000);

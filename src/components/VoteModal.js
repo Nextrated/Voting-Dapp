@@ -14,17 +14,42 @@ import {Modal,
 	ModalCloseButton,
 	Button,
   useToast,
+  Divider,
 } from "@chakra-ui/react";
-import { getCandidates } from "../utils";
+import { getCandidates, castVote } from "../utils";
 
-const VoteModal = ({isOpen, onClose, category, roles}) => {
+const VoteModal = ({isOpen, onClose, roles}) => {
 	const [loading, setLoading] = useState(false);
 	const [candidates, setCandidates] = useState([])
-	const [choice, setChoice] = useState("")
+	const [choiceCandidateForRole, setChoiceCandidateForRole] = useState({choiceAddr:"",post:""})
+
   const toast = useToast();
 	const submitVote = () => {
-		onClose()
-		console.log("!")
+    setLoading(true)
+		console.log(choiceCandidateForRole)
+    castVote(window.ethereum, choiceCandidateForRole.choiceAddr, choiceCandidateForRole.post).then( ()=> {
+      setLoading(false);
+            onClose();
+            toast({
+                title:"Congratulations",
+                description:"Your Vote has been recorded",
+                status:"success",
+                duration: 5000,
+                isClosable:true
+            });
+        }).catch(r => {
+            setLoading(false);
+             onClose();
+            let x = r.toString().split("}")[0].split("{")[1].replace(',"data":', "")
+            x = JSON.parse(`{${x}}`)
+            toast({
+                title:"Sorry",
+                description:x.message,
+                status:"error",
+                duration: 5000,
+                isClosable:true
+            });
+    })
 	}
 
   const parseContestants = (names, addr, category) => {
@@ -70,15 +95,26 @@ const VoteModal = ({isOpen, onClose, category, roles}) => {
           <ModalCloseButton />
           <ModalBody pb={6}>
             <Box>
-              <Text> Select one candidate of your choice for each role </Text>
-
-              <FormLabel as="view">Select one candidate of your choice for each role</FormLabel>
-              <RadioGroup value={choice} mb={4} >
-                <VStack spacing="15px">
-
-     
-                </VStack>
-              </RadioGroup>
+              <Text mb={3} color="orange"> Note: You can only select one candidate of your choice for each role </Text>
+              <form onSubmit={submitVote} mt={2}>
+              {roles.map( (role, id) => 
+                  (
+                    <>
+                      <Divider bg="orange" mb={2} h="1px"/> 
+                      <FormLabel as="view">For the position of {role}</FormLabel>
+                      <RadioGroup value={setChoiceCandidateForRole.choiceAddr} mb={4} >
+                        <VStack spacing="15px">
+                        {(candidates.filter(x=> x.category === role)).map((candidate,cid)=> 
+                          (
+                            <Radio key={cid} value={candidate.addr} mb={3} onChange={ e => setChoiceCandidateForRole({choiceAddr:e.target.value,post:role}) }>{candidate.name} - {candidate.addr}</Radio> 
+                          )
+                        )}
+                        </VStack>
+                      </RadioGroup>
+                    </>
+                  )
+                )}
+              
               <ModalFooter>
                 
                 <Button 
@@ -89,7 +125,9 @@ const VoteModal = ({isOpen, onClose, category, roles}) => {
                   Submit
                 </Button>
                 <Button onClick={onClose}>Cancel</Button>
+                
               </ModalFooter>
+              </form>
             </Box>
           </ModalBody>
         </ModalContent>

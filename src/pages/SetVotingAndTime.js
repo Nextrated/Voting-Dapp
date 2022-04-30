@@ -28,7 +28,7 @@ import {ethers} from 'ethers';
 
 import contractAddress from '../contracts/contract_address.json';
 import abi from '../contracts/abi.json';
-import {startContestTime, startElectionTime} from '../utils';
+import {startContestTime, startElectionTime, announceResults} from '../utils';
 import {InfoIcon, RepeatClockIcon, TimeIcon} from '@chakra-ui/icons';
 
 const SetVotingAndTime = () => {
@@ -87,6 +87,8 @@ const SetVotingAndTime = () => {
         await setCategoryTxn.wait ();
         setSubmitted ('successful!');
         setIsCategorySet (false);
+        setCategoryDescription("")
+        setEligibility("")
         // setAddDelegateAddress ('');
 
         setTimeout (() => {
@@ -102,13 +104,18 @@ const SetVotingAndTime = () => {
       } else {
         setIsCategorySet (false);
         setSubmitted ('');
+        setCategoryDescription("")
+        setEligibility("")
         showErrorToast ('Please ensure you are connected to metamask');
         console.log ('ethereum object does not exist!');
       }
     } catch (error) {
       // onClose();
-      // setIsSubmitted(false);
-      // setSubmitted('');
+      //setIsSubmitted(false);
+      setIsCategorySet (false);
+      setSubmitted('');
+      setCategoryDescription("")
+      setEligibility("")
       showErrorToast ('An unexpected error occured');
       console.log (error);
     }
@@ -234,6 +241,28 @@ const SetVotingAndTime = () => {
     getCurrentCategory ();
     console.log ('Category', currentCategory);
   }, []);
+
+  const makeResultsPublic = () => {
+      announceResults(window.ethereum).then(()=> {
+        toast({
+                title:"Successful",
+                description:"Results have been announced and made public",
+                status:"success",
+                duration: 5000,
+                isClosable:true
+            });
+            
+        }).catch(()=> {
+            toast({
+                    title:"Sorry",
+                    description:"An unexpected error occured",
+                    status:"error",
+                    duration: 5000,
+                    isClosable:true
+                });
+        })
+  }
+
   return (
     <Box mx="10" my="10">
       <Grid
@@ -471,6 +500,37 @@ const SetVotingAndTime = () => {
           </Modal>
 
         </GridItem>
+
+        <GridItem>  
+          <Box onClick={makeResultsPublic} cursor="pointer">
+
+            <Box
+              maxW={'445px'}
+              h="250"
+              w={'full'}
+              bg={useColorModeValue ('white', 'grey.900')}
+              boxShadow={'2xl'}
+              rounded={'md'}
+              p={6}
+              overflow={'hidden'}
+            >
+              <TimeIcon fontSize="3xl" mb="5" />
+              <Stack>
+                <Heading
+                  color={useColorModeValue ('gray.700', 'white')}
+                  fontSize={'2xl'}
+                >
+                  Announce the results
+                </Heading>
+                <Text color={'gray.500'}>
+                  The chairman has the power to announce the results of the election compiled by teachers and board members.
+                  {' '}
+
+                </Text>
+              </Stack>
+            </Box>
+          </Box>
+        </GridItem> 
 
       </Grid>
 
