@@ -137,11 +137,26 @@ describe("resetCategory", function() {
 describe("StartShowInterest", function() {
   it("Start the timer to allow stakeholders to show interest", async function() {
   let showInterestDuration = 30
-  let showInterestStart = 0
+  let blocktimestamp = 0
+  let showInterestStart = blocktimestamp
   showInterestEnd = showInterestDuration + showInterestStart;
   const test = await showInterestEnd
   expect(test).to.equal(30);
 
+});
+});
+describe("canStillExpressInterest", function() {
+  it("Checks to confirm if stakeholders can still express interest", async function() {
+    let showInterestDuration = 30
+    let blocktimestamp = 0
+    let showInterestStart = blocktimestamp
+    showInterestEnd = showInterestDuration + showInterestStart;
+    if(showInterestEnd > blocktimestamp){
+      return true;
+  } else{
+      return false;
+  }
+  expect(showInterestEnd).to.equal(true);
 });
 });
 });
