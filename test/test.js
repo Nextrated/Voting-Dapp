@@ -1,7 +1,4 @@
-const { TimeIcon } = require("@chakra-ui/icons");
-const { clear } = require("@testing-library/user-event/dist/clear");
 const { expect } = require("chai");
-const { useTime } = require("framer-motion");
 const { ethers } = require("hardhat");
 
 
@@ -157,6 +154,30 @@ describe("canStillExpressInterest", function() {
       return false;
   }
   expect(showInterestEnd).to.equal(true);
+});
+});
+
+describe("getCurrentCategory", function() {
+  it("Gets the current category", async function() {
+    await contract.getCurrentCategory();
+    const test = await contract.category.length
+    const votecategory = await contract.categorySet;
+    const role = await contract.eligibleRole
+    return(votecategory, role);
+});
+});
+describe("expressInterest", function() {
+  it("allows stakeholders to express interest for an election post", async function() {
+    await contract.expressInterest;
+    await contract.isCompiler || isStudent;
+    const b = await contract.timeLefttoShowInterest;
+    expect(b).to.be > 0;
+    await contract.categorySet;
+    const d = await contract.stakeholders.role;
+    expect(d).to.equal(contract.eligibleRole);
+    await contract.isContesting;
+    await contract.candidatesCount;
+    
 });
 });
 });
