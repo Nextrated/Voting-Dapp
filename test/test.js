@@ -181,4 +181,13 @@ describe("expressInterest", function() {
     
 });
 });
+  it("Gets the details of the contestants", async function() {
+    await contract.getContestantDetails();
+    const test = await contract.contestants.length
+    const name = await contract.contestants.name;
+    const addr = await contract.contestants.addr;
+    const contestCategory = await contract.contestants.category;
+    return(name, addr, contestCategory);
+  });
+
 });
