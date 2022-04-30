@@ -1,4 +1,7 @@
+const { TimeIcon } = require("@chakra-ui/icons");
+const { clear } = require("@testing-library/user-event/dist/clear");
 const { expect } = require("chai");
+const { useTime } = require("framer-motion");
 const { ethers } = require("hardhat");
 
 
@@ -114,6 +117,31 @@ describe("Election contract", function() {
         ,"\n\t", "and eligible contestants should be of the role -->", roleEligible)
       })
     })
+});
 
+describe("resetCategory", function() {
+  it("Should reset voting category", async function() {
+    
+    await contract.setVotingCategory("president", 0);
+    const currentCategory = await contract.getCurrentCategory();
+    const categorySet = currentCategory[0][2]
+    const roleSet = String(currentCategory[1][2]);
+    const test = delete categorySet;
+    const test2 = delete roleSet;
+    expect(categorySet).to.equal(undefined);
+    expect(roleSet).to.equal("undefined");
+    
+
+  })
+})
+describe("StartShowInterest", function() {
+  it("Start the timer to allow stakeholders to show interest", async function() {
+  let showInterestDuration = 30
+  let showInterestStart = 0
+  showInterestEnd = showInterestDuration + showInterestStart;
+  const test = await showInterestEnd
+  expect(test).to.equal(30);
+
+});
 });
 });
