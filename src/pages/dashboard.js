@@ -10,6 +10,7 @@ import { getUserDetails, getUserBalance, hasElectionStarted, isResultAnnounced, 
 import ElectionDetails  from "../components/ElectionDetails";
 import VoteModal  from "../components/VoteModal";
 import ContestAlert from '../components/ContestAlert';
+import ResultModal from '../components/ResultModal';
 
 const Dashboard = ({currentAccount}) => {
     const [name, setName] = useState ('');
@@ -32,6 +33,11 @@ const Dashboard = ({currentAccount}) => {
         isOpen : isVoteOpen,
         onOpen: onVoteOpen,
         onClose: onVoteClose} = useDisclosure();
+    const { 
+            isOpen : isResultOpen,
+            onOpen: onResultOpen,
+            onClose: onResultClose} = useDisclosure();
+        
 
     function getEligibleCategory(arr){
         let newArr = []
@@ -151,7 +157,7 @@ const Dashboard = ({currentAccount}) => {
                 isClosable:true
             });
         } else{
-            return;
+            onResultOpen();
         }
     }
 
@@ -270,6 +276,8 @@ const Dashboard = ({currentAccount}) => {
                 </Box>
             </Flex>
             <ElectionDetails isOpen={isOpen} onClose={onClose} />
+            <ResultModal isOpen={isResultOpen} onClose={onResultClose} />
+
             <ContestAlert role={eligibleCategory} name={name} isModalOpen={isContestOpen} onModalClose={onContestClose} resetBal={resetBal} currentAccount={currentAccount}/>
             <VoteModal category={category} isOpen={isVoteOpen} onClose={onVoteClose} roles={roles} resetBal={resetBal} currentAccount={currentAccount}/>
         </Box>) : 
