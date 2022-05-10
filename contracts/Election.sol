@@ -100,9 +100,8 @@ contract Election is Roles {
     /// @param _category represents the category to be cleared
     function resetVotingCategory(string calldata _category) public onlyChairman {
         require(categorySet[_category] == true, "Category does not exist");
-        // delete voteCategory;
-        delete categorySet[_category];
-        delete eligibleRole[_category];
+        delete category;
+        categorySet[_category] = false;
     }
 
     /// @notice Function to start the time-span for expressing interest
