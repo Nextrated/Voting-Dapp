@@ -14,7 +14,7 @@ const Home = ({currentAccount}) => {
 		setLoading(false)
 		toast({
 			title:"Sorry",
-			description:"You are not a member of Zuri Organization",
+			description:"You are not a member of computing masters department",
 			status:"error",
 			duration: 5000,
 			isClosable:true
@@ -37,7 +37,7 @@ const Home = ({currentAccount}) => {
     	loading === false ? (<Box d="flex" flexDirection={{base:"column-reverse", md:"row"}} px={{base:5, md:10}} py={10} mx="auto" justifyContent="space-between">
 	    	    		<Box w={{base:"100%", md:"40%"}} fontSize={{base:"3xl",md:"2xl",lg:"4xl"}} fontWeight="700" mt="50px" textAlign={{base:"center", md:"left"}}>
 	    	    			<Text>
-	    		    			Vote for the future of Zuri with <span style={{color:"orange"}}>ZuriPolls</span>
+	    		    			Vote for the future of Computing Department with <span style={{color:"orange"}}>Computing Polls</span>
 	    		    		</Text>
 	    	    			<Text>
 	    		    			Your vote translates to your voice and your right to make a choice	

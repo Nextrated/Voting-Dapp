@@ -10,7 +10,7 @@ const Header = ({toggleWallet, currentAccount, currentNetwork, isConnected}) => 
 
     return (
         <Flex w="100%" p={5} boxShadow="xl" justify="space-between" alignItems="center" className="header">
-            <Text fontSize={{base:"lg", md:"2xl"}} fontWeight="700">ZuriPolls 🗳️</Text>
+            <Text fontSize={{base:"lg", md:"2xl"}} fontWeight="700">Computing Polls 🗳️</Text>
             <Box d="flex" alignItems="center">
                 <ColorModeSwitcher/>
                 <Box d="flex" flexDirection="column" mt="-10px" ml={3}>

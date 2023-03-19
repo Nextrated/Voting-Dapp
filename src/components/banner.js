@@ -5,7 +5,7 @@ import { Box, Text } from "@chakra-ui/react";
 const Banner = () => {
     return (
 		<Box bg="orange" w="100%" py={2} className="banner" boxShadow="xl">
-			<Text className="banner-text" color="black"> You will be notified on your dashboard when election commences and if you are eligible to contest. Only valid members of the Zuri Organization can vote🔥🔥. Ensure you are registered by the chairman before you can vote or contest.	</Text>
+			<Text className="banner-text" color="black"> You will be notified on your dashboard when election expression of interest and voting starts. Only valid members of Computing Masters Department can vote🔥🔥. Ensure you are registered by the vote adminstrator before you can vote or contest.	</Text>
 		</Box>
     );
 };

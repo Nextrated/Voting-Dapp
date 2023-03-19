@@ -1,31 +1,26 @@
 const { ethers } = require("hardhat");
-const fs = require('fs')
-
-const contractName = "Election"
+const fs = require('fs');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
   
-  console.log("Deploying contracts with the account:", deployer.address);
+  const contractFactory = await ethers.getContractFactory("Election");
+
+  const contract = await contractFactory.deploy();
+
+  await contract.deployed();
+  console.log("Contract address is : ", contract.address);
+
+  const data = {
+    contractAddress: contract.address,
+    abi: JSON.parse(contract.interface.format('json'))
+  }
+ 
   
-  const contractFactory = await ethers.getContractFactory(contractName)
-
-  const contract = await contractFactory.deploy()
-
-  const address = JSON.stringify({
-    "contractAddress": contract.address,
-  })
-
-  console.log("Contract address is : ", contract.address)
-  await contract.deployed()
-  const abi = fs.readFileSync(`./artifacts/contracts/${contractName}.sol/${contractName}.json`);
-
-  // await fs.mkdir('.src/contracts', { recursive: true }, (err) => {
-    // if (err) throw err;
-  // });
-
-  fs.writeFileSync('./src/contracts/abi.json', abi);
-  fs.writeFileSync('./src/contracts/contract_address.json', address)
+  //This writes the ABI and address to the mktplace.json
+  // fs.writeFileSync('./src/Marketplace.json', JSON.stringify(data))
+  fs.writeFileSync('./src/contracts/abi.json', JSON.stringify(data.abi));
+  fs.writeFileSync('./src/contracts/contract_address.json', JSON.stringify(data.contractAddress));
 
 }
 

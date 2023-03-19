@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import contractAbi from "./contracts/abi.json"
+import abi from "./contracts/abi.json"
 import contractAddress from "./contracts/contract_address.json"
 
 const getProvider = async (ethereum) => {
@@ -16,7 +16,7 @@ const getSigner = async (ethereum) => {
 const getContract = async (ethereum) => {
     const signer = await getSigner(ethereum)
 
-    const contract = new ethers.Contract(contractAddress.contractAddress, contractAbi.abi, signer)
+    const contract = new ethers.Contract(contractAddress, abi, signer)
 
     return contract
 }
@@ -32,10 +32,10 @@ export const isStakeholder = async (ethereum, account) => {
     }
 }
 
-export const isChairman = async (ethereum, account) => {
+export const isVoteCordinator = async (ethereum, account) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.isChairman(account)
+        const txnResult = contract.isVoteCordinator(account)
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)

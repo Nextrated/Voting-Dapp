@@ -81,8 +81,8 @@ const SetVotingAndTime = () => {
         const provider = new ethers.providers.Web3Provider (ethereum);
         const signer = provider.getSigner ();
         const sendCategory = new ethers.Contract (
-          contractAddress.contractAddress,
-          abi.abi,
+          contractAddress,
+          abi,
           signer
         );
         const setCategoryTxn = await sendCategory.setVotingCategory (
@@ -138,7 +138,7 @@ const SetVotingAndTime = () => {
     await provider.send ('eth_requestAccounts', []);
     const signer = await provider.getSigner ();
     const contract = new ethers.Contract (
-      contractAddress.contractAddress,
+      contractAddress,
       abi.abi,
       signer
     );
@@ -259,8 +259,8 @@ const SetVotingAndTime = () => {
         const provider = new ethers.providers.Web3Provider (ethereum);
         const signer = provider.getSigner ();
         const resetElectionContract = new ethers.Contract (
-          contractAddress.contractAddress,
-          abi.abi,
+          contractAddress,
+          abi,
           signer
         );
         const resetElectionTxn = await resetElectionContract.resetVotingCategory (
@@ -367,7 +367,7 @@ const handleReset = (e) => {
                   Set voting and eligibility
                 </Heading>
                 <Text color={'gray.500'}>
-                  The chairman has the power to set voting and who is eligible to contest and show interest in this particular election.
+                  The vote cordinator has the power to set voting for who is eligible to show interest in this particular election.
 
                 </Text>
               </Stack>

@@ -36,11 +36,9 @@ const ElectionDetails	 = ({isOpen,onClose}) => {
 				await setRoles(res[0]);
                 for(let i=0; i<res[1].length; i++){
                     var r= convHex(res[1][i]);
-                    if(r===0){
-                        await setEligibility([...eligibility,"Board member"])
-                    } else if(r===1){
+                    if(r===1){
                         await setEligibility([...eligibility,"Teacher"])
-                    }else{
+                    } else{
                         await setEligibility([...eligibility,"Student"])
                     }
                 }
@@ -61,7 +59,7 @@ const ElectionDetails	 = ({isOpen,onClose}) => {
         			<ModalCloseButton/>
         			<ModalBody>	
         				{roles.length === 0 ? "Please check back later. Details of election has not yet been set" : null}
-        				{roles.length === 1 ? `This election is for the post of the ${roles[0]} of Zuri Organization and the people eligible to contest are the ${eligibility[0]}s`: null}
+        				{roles.length === 1 ? `This election is for the post of the ${roles[0]} of Computing Masters Department and the people eligible to contest are the ${eligibility[0]}s`: null}
         				{roles.length > 1 ? 
         					(<Box>
         						<Text>This election is for the following roles</Text>
