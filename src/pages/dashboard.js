@@ -92,12 +92,12 @@ const Dashboard = ({ currentAccount }) => {
         // console.log(res)
         setName(res.name);
         const r = parseInt(res.role._hex, 16);
-        if (r === 1) {
-          setRole("Teacher");
-        } else if (r === 2) {
-          setRole("Student");
-        } else if (isVoteCordinator(window.ethereum, currentAccount)) {
+        if (r === 0) {
           setRole("Vote Cordinator");
+        } else if (r === 1) {
+          setRole("Teacher");
+        }else if (r === 2) {
+          setRole("Student");
         }
       });
 
@@ -122,7 +122,9 @@ const Dashboard = ({ currentAccount }) => {
         await setRoles(res[0]);
         for (let i = 0; i < res[1].length; i++) {
           var r = convHex(res[1][i]);
-          if (r === 1) {
+          if(r===0){
+            await setEligibility([...eligibility,"Vote Cordinator"])
+          } else if (r === 1) {
             await setEligibility([...eligibility, "Teacher"]);
           } else {
             await setEligibility([...eligibility, "Student"]);
@@ -384,7 +386,7 @@ const Dashboard = ({ currentAccount }) => {
               </Flex>
               <Text fontSize="md" textAlign="left" fontWeight="300">
                 View voting results here. Results are only available after
-                compilation and has been made public by the chairman
+                compilation and has been made public by the vote cordinator
               </Text>
             </Box>
           </Box>
@@ -407,7 +409,7 @@ const Dashboard = ({ currentAccount }) => {
               Activities
             </Text>
 
-            {role === "Board member" || role === "Teacher" ? (
+            {role == "Vote Cordinator" || role === "Teacher" ? (
               <Button
                 bg="orange"
                 isFullWidth

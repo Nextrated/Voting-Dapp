@@ -6,8 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract Roles is ERC20, AccessControl {
+
     /// @notice Declaring an address that will act as the vote cordinator
     address public AdminAddr;
+    string public AdminName;
+    uint public AdminRole;
 
     /// @notice Declaring the events to be emitted when a new vote cordinator is added
     event DelegateCordinator(address indexed added);
@@ -20,8 +23,10 @@ contract Roles is ERC20, AccessControl {
     bytes32 public constant STUDENT_ROLE = keccak256("STUDENT");
 
     /// @notice State variables representing variables used to represent roles
+    uint voteCordinatorID = 0;
     uint teacherID = 1;
     uint studentID = 2;
+    
 
     /// @notice model a stakeHolder
     struct Stakeholder {
@@ -45,9 +50,16 @@ contract Roles is ERC20, AccessControl {
     constructor() ERC20("COMPUTINGMASTERS", "CIS4055") {
         _mint(msg.sender, 20000000 * 10 ** 18);
         AdminAddr = msg.sender;
+        AdminName = "Admin";
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setRoleAdmin(VOTECORDINATOR_ROLE, DEFAULT_ADMIN_ROLE);
-        grantRole(VOTECORDINATOR_ROLE, msg.sender);
+        grantRole(VOTECORDINATOR_ROLE, msg.sender); 
+        stakeholders[msg.sender].holder = AdminAddr;
+        stakeholders[msg.sender].name = AdminName;
+        stakeholders[msg.sender].role = 0;
+        stakeHolderExists[msg.sender] = true;
+        stakeholdersList.push(msg.sender);
+
     }
 
     function isAdmin(address account) public view virtual returns (bool) {
@@ -156,7 +168,7 @@ function addStakeHolder(
 
     if (_role == 1) {
         grantRole(TEACHER_ROLE, _holder);
-    } else if (_role == 2) {
+    }  else if (_role == 2) {
         grantRole(STUDENT_ROLE, _holder);
     }
     

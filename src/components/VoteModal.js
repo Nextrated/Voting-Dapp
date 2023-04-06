@@ -52,11 +52,11 @@ const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
         }).catch(r => {
             setLoading(false);
              onClose();
-            let x = r.toString().split("}")[0].split("{")[1].replace(',"data":', "")
-            x = JSON.parse(`{${x}}`)
+            //  let x = r.toString().split("}")[0].split("{")[1].replace(',"data":', "")
+            //  x = JSON.parse(`{${x}}`)
             toast({
                 title:"Sorry",
-                description:x.message,
+                description: "An error occoured",
                 status:"error",
                 duration: 5000,
                 isClosable:true

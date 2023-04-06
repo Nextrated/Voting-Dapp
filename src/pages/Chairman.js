@@ -46,6 +46,7 @@ const Chairman = () => {
   const [submitted, setSubmitted] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isTokenSent, setIsTokenSent] = useState(false);
+  const [isTokenSent1, setIsTokenSent1] = useState(false);
   const toast = useToast();
   const [teacherAmount, setTeacherAmount] = useState("");
   const [studentAmount, setStudentAmount] = useState("");
@@ -297,7 +298,7 @@ const Chairman = () => {
         );
         await sendTokenTxn.wait();
         setSubmitted("successful!");
-        setIsTokenSent(false);
+        setIsTokenSent1(false);
         setAddDelegateAddress("");
 
         setTimeout(() => {
@@ -313,7 +314,7 @@ const Chairman = () => {
           });
         }, 1000);
       } else {
-        setIsTokenSent(false);
+        setIsTokenSent1(false);
         onDispatchTokenClose();
         setSubmitted("");
         showErrorToast("Please ensure you are connected to metamask");
@@ -348,7 +349,7 @@ const Chairman = () => {
 
   const handleSendTokensToTeachers = (e) => {
     e.preventDefault();
-    setIsTokenSent(true);
+    setIsTokenSent1(true);
     sendTokensToTeachers(teacherAmount);
   };
 
@@ -546,7 +547,7 @@ const Chairman = () => {
                       <Text mr={2} color={"green.500"}>
                         {submitted}
                       </Text>
-                      {isTokenSent === false ? (
+                      {isTokenSent1 === false ? (
                         <Button colorScheme="blue" mr={3} type="submit">
                           Send Tokens
                         </Button>
@@ -624,8 +625,8 @@ const Chairman = () => {
                     Add a delegate
                   </Heading>
                   <Text color={"gray.500"}>
-                    The chairman can add a delegate to assist himself/herself
-                    with the day to day activities in the Zuri Organization like
+                    The vote cordinator can add a delegate to assist himself/herself
+                    with the day to day activities like
                     adding of stakeholders and distribution of tokens.
                   </Text>
                 </Stack>
@@ -708,7 +709,7 @@ const Chairman = () => {
                     Remove a delegate
                   </Heading>
                   <Text color={"gray.500"}>
-                    The chairman of Zuri organization can remove a delegate if
+                    The vote cordinator can remove a delegate if
                     he/she feels it is time to remove such a delegate.
                   </Text>
                 </Stack>

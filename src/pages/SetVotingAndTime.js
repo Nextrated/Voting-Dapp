@@ -146,7 +146,7 @@ const SetVotingAndTime = () => {
     const getRole = String (category[1]);
 
     if (getRole === 0) {
-      setEligibleRole ('Board Member');
+      setEligibleRole ('Vote Cordinator');
     } else if (getRole === 1) {
       setEligibleRole ('Teacher');
     } else if (getRole === 2) {
@@ -364,7 +364,7 @@ const handleReset = (e) => {
                   color={useColorModeValue ('gray.700', 'white')}
                   fontSize={'2xl'}
                 >
-                  Set voting and eligibility
+                  Set voting category and eligibility
                 </Heading>
                 <Text color={'gray.500'}>
                   The vote cordinator has the power to set voting for who is eligible to show interest in this particular election.
@@ -382,7 +382,7 @@ const handleReset = (e) => {
           >
             <ModalOverlay />
             <ModalContent>
-              <ModalHeader>Set voting and eligibility</ModalHeader>
+              <ModalHeader>Set Voting Category and Eligibility</ModalHeader>
               <ModalCloseButton />
               <ModalBody pb={6}>
 
@@ -400,13 +400,6 @@ const handleReset = (e) => {
                   />
 
                   <RadioGroup required>
-                    <Radio
-                      value="0"
-                      mr="2"
-                      onChange={e => setEligibility (e.target.value)}
-                    >
-                      Board Member
-                    </Radio>
                     <Radio
                       value="1"
                       mr="2"
@@ -468,7 +461,7 @@ const handleReset = (e) => {
                   Set Time for contestants to show interest (in seconds)
                 </Heading>
                 <Text color={'gray.500'}>
-                  The chairman sets the time for the contestants to show interest in a particular election.
+                  The vote cordinator sets the time for the contestants to show interest in a particular election.
                   {' '}
                 </Text>
               </Stack>
@@ -540,7 +533,7 @@ const handleReset = (e) => {
                   Set Time for everyone to vote (in seconds)
                 </Heading>
                 <Text color={'gray.500'}>
-                  The chairman has the power to set the time span of how long he wants voting to last.
+                  The vote cordinator has the power to set the time span of how long he wants voting to last.
                   {' '}
 
                 </Text>
@@ -613,7 +606,7 @@ const handleReset = (e) => {
                   Announce the results
                 </Heading>
                 <Text color={'gray.500'}>
-                  The chairman has the power to announce the results of the election compiled by teachers and board members.
+                  The vote cordinator has the power to announce the results of the election compiled by teachers and board members.
                   {' '}
 
                 </Text>
@@ -644,7 +637,7 @@ const handleReset = (e) => {
                 Reset Election
               </Heading>
               <Text color={'gray.500'}>
-                The chairman has the power to reset the categories to be voted for and roles eligible to contest
+                The vote cordinator has the power to reset the categories to be voted for and roles eligible to contest
                 {' '}
 
               </Text>

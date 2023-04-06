@@ -9,21 +9,12 @@ contract Election is Roles {
     uint _electionEnd;
     uint electionDuration;
 
-    /// @notice State variables used in setting the time-span of showing interest
+    /// @notice State variables used in setting the time-span of showing interest in positions
     uint _showInterestStart;
     uint _showInterestEnd;
     uint showInterestDuration;
 
-    /// @notice State variable used to keep track of contestant count
-    uint public contestantsCount;
-
-    /// @notice Declaring a state variable to control when the result of the election can be announced
-    bool public isResultAnnounced = false;
-
-    /// @notice mapping to ensure a category has been set
-    mapping (string => bool) public categorySet;
-
-
+    /// @notice decalring events to be emitted in the contract
     event ElectionEvent (uint indexed start, uint indexed duration);
     event ExpressedInterest (string indexed name, address indexed contestant, string indexed category);
     event Voted(address voteChoice, string Category);
@@ -31,29 +22,32 @@ contract Election is Roles {
 
     /// @notice model of a contestant (Stakeholders that express interest becomes contestants)
     struct Contestant {
+        uint id;
         string name;
         address addr;
         string category;
         uint voteCount;
     }
 
-    mapping(address => Contestant) public contestantt;
+  /// @notice mapping an address to return the Contestant struct
+    mapping(address => Contestant) public contestantAddr;
 
-    /// @notice declaring an array that keeps track on all contestants
+  /// @notice declaring an array that keeps track of contestant that have been recorded
     Contestant[] public contestants;
 
-    /// @notice mapping an address to know when a stakeholder has expressed interest and is now a contestant
+  /// @notice State variable used to keep track of contestant count
+    uint public contestantsCount;
+
+  /// @notice mapping an address to know when a stakeholder has expressed interest and is now a contestant
     mapping (address => mapping(string => bool)) public isContesting;
 
-    mapping(address => bool) public showninterest;
-
-    /// @notice model the details of a vote
+  /// @notice model the details of a vote
     struct Vote {
         bool voted;
         address voteChoice;
     }
 
-    //store accounts that have voted
+    ///@notice mapping an address to store accounts that have voted
     mapping(address =>  mapping(string => Vote)) public votes;
 
     /// @notice declaring an array that keeps track on all votes
@@ -65,10 +59,13 @@ contract Election is Roles {
         string name;
         uint role;
     }
-    /// @notice array to keep track of categories set
+    /// @notice array to keep track of election categories set
      Category[] public category;
+    
+    /// @notice mapping to ensure a categoty has been set
+    mapping (string => bool) public categorySet;
 
-      /// @notice mapping the category to the roles eligible to contest
+    /// @notice mapping the category to the roles eligible to contest
     mapping(string => uint) eligibleRole;
     
   
@@ -81,7 +78,10 @@ contract Election is Roles {
 
     Result[] public resultDetails;
 
-      /// @notice array for public results
+ /// @notice Declaring a state variable to control when the result of the election can be announced
+    bool public isResultAnnounced = false;
+
+/// @notice array for public results
     address[] public candidatesResultCompiled;
     uint[] public votesResultCompiled;
     string[] public categoriesResultCompiled;
@@ -109,8 +109,19 @@ contract Election is Roles {
     /// @param _category represents the category to be cleared
     function resetVotingCategory(string calldata _category) public onlyVoteCordinator {
         require(categorySet[_category] == true, "Category does not exist");
-        delete category;
         categorySet[_category] = false;
+        for (uint i = 0; i< contestants.length; i++){
+            isContesting[contestants[i].addr][_category] = false;
+        }
+        _electionStart = 0;
+        _electionEnd = 0;
+        delete category;
+        delete contestants;
+        hasCompiled = false;
+        votes[msg.sender][_category].voted = false;
+        votes[msg.sender][_category].voteChoice = address(0);
+        delete votesList;
+        delete resultDetails;
     }
 
     /// @notice Function to start the time-span for expressing interest
@@ -151,25 +162,26 @@ contract Election is Roles {
     /// @param _name represents the name of the stakeholder wants to show interest
     /// @param _category represnts the category this stakeholder wants to go for
     function expressInterest(string calldata _name, string calldata _category) public 
-    onlyStakeholder {
+    onlyStakeholder returns (uint) {
         require(hasRole(VOTECORDINATOR_ROLE, msg.sender) == false, "Chairman cannot express interest");
         require(timeLefttoShowInterest() > 0, "time up");
         require(categorySet[_category] == true, "category invalid");
         require(stakeholders[msg.sender].role == eligibleRole[_category], "Inelligible to contest" );
         require(msg.sender != address(0), "invalid address");
         require(isContesting[msg.sender][_category] == false, "Already shown interest in this position");
-        require(showninterest[msg.sender] == false, "Already shown interest in a position");
         require(transfer(AdminAddr, 150*10**18) , "You don't have enough tokens to express interest");
 
         contestantsCount ++;
 
         isContesting[msg.sender][_category] = true;
 
-        showninterest[msg.sender]= true;
+        contestantAddr[msg.sender] = Contestant(contestantsCount, _name, msg.sender, _category, 0);
 
-        contestants.push(Contestant(_name, msg.sender, _category, 0));
+        contestants.push(contestantAddr[msg.sender]);
  
         emit ExpressedInterest (_name , msg.sender, _category);
+
+        return contestantsCount;
 
     }
 
@@ -218,38 +230,37 @@ contract Election is Roles {
     /// @notice Function to place votes, only runnable by a stakeholder
     /// @param _contestant represents the address of the candidate a staeholder wishes to vote for
     /// @param _category represents the category the stakeholder wishes to place their vote in
-    function placeVote(address[] memory _contestant, string[] memory _category) public onlyStakeholder
+    function placeVote(address _contestant, string memory _category) public onlyStakeholder
     {
         require(timeLeftToVote() > 0, "Voting has ended");
         require(isElectionOn() == true, "Election hasn't started");
+        require(categorySet[_category] == true, "Category not available for voting");
+        require(votes[msg.sender][_category].voted == false, "already voted");
+        require(isContesting[_contestant][_category] == true, "address not a contestant");
         require(transfer(AdminAddr, 50*10**18) , "You don't have enough tokens to vote");
 
-        for(uint256 i = 0; i < contestants.length; ++i) {
-            require(categorySet[_category[i]] == true, "voting hasn't begun");
-            require(!votes[msg.sender][_category[i]].voted, "already voted");
-            require(isContesting[_contestant[i]][_category[i]] == true, "address not a contestant");
-
             //record that voter has voted
-            votes[msg.sender][_category[i]].voted = true;
-            votes[msg.sender][_category[i]].voteChoice = _contestant[i];
+            votes[msg.sender][_category].voted = true;
+            votes[msg.sender][_category].voteChoice = _contestant;
 
             //update candidate vote count
-            uint  voteCount =  contestantt[_contestant[i]].voteCount += 1;
-            address contestant = contestantt[_contestant[i]].addr = _contestant[i];
-            contestantt[_contestant[i]].category = _category[i];
+            uint  voteCount =  contestantAddr[_contestant].voteCount += 1;
+            address contestant = contestantAddr[_contestant].addr = _contestant;
+            contestantAddr[_contestant].category = _category;
 
-            votesList.push(_contestant[i]);
+            votesList.push(_contestant);
 
-            resultDetails.push(Result(_category[i], contestant, voteCount));
+            resultDetails.push(Result(_category, contestant, voteCount));
 
-            emit Voted(_contestant[i], _category[i]);
+            emit Voted(_contestant, _category);
 
-        }
     }
 
 
     /// @notice Function to compile results
     function compileVotes() public onlyCompiler {
+        require(_electionStart != 0, "Election has not started yet");
+        require(_electionEnd != 0, "Election has not ended yet");
         require(timeLeftToVote() <= 0, "Election is still ongoing");
         uint len = resultDetails.length;
 
