@@ -38,7 +38,7 @@ const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
 	const submitVote = () => {
     setLoading(true)
 		console.log(choiceCandidateForRole)
-    castVote(window.ethereum, choiceCandidateForRole.choiceAddr, choiceCandidateForRole.post).then( ()=> {
+    castVote(window.ethereum, [choiceCandidateForRole.choiceAddr], [choiceCandidateForRole.post]).then( ()=> {
       setLoading(false);
           resetBal(getBal)
             onClose();

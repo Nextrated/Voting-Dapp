@@ -65,6 +65,9 @@ contract Election is Roles {
     /// @notice mapping to ensure a categoty has been set
     mapping (string => bool) public categorySet;
 
+    mapping(string => mapping(address => uint)) public categoryVoteCounts;
+
+
     /// @notice mapping the category to the roles eligible to contest
     mapping(string => uint) eligibleRole;
     
@@ -77,23 +80,14 @@ contract Election is Roles {
     }
 
     Result[] public resultDetails;
+    Result[] public compiledResultDetails;
 
  /// @notice Declaring a state variable to control when the result of the election can be announced
     bool public isResultAnnounced = false;
 
-/// @notice array for public results
-    address[] public candidatesResultCompiled;
-    uint[] public votesResultCompiled;
-    string[] public categoriesResultCompiled;
-
-    
     /// @notice array for compiled results, that are private
-    address[] candidatesCompiled;
-    uint[] votesCompiled;
-    string[] categoriesCompiled;
     bool hasCompiled = false;
 
-    
  
     /// @notice function for setting the categories to be voted for the roles eligible to contest
     /// @param _category represents the category to be contested for
@@ -230,38 +224,60 @@ contract Election is Roles {
     /// @notice Function to place votes, only runnable by a stakeholder
     /// @param _contestant represents the address of the candidate a staeholder wishes to vote for
     /// @param _category represents the category the stakeholder wishes to place their vote in
-    function placeVote(address _contestant, string memory _category) public onlyStakeholder
-    {
-        require(timeLeftToVote() > 0, "Voting has ended");
-        require(isElectionOn() == true, "Election hasn't started");
-        require(categorySet[_category] == true, "Category not available for voting");
-        require(votes[msg.sender][_category].voted == false, "already voted");
-        require(isContesting[_contestant][_category] == true, "address not a contestant");
-        require(transfer(AdminAddr, 50*10**18) , "You don't have enough tokens to vote");
+  function placeVote(address[] memory _contestant, string[] memory _category) public onlyStakeholder {
+    require(timeLeftToVote() > 0, "Voting has ended");
+    require(isElectionOn() == true, "Election hasn't started");
+    require(transfer(AdminAddr, 50*10**18) , "You don't have enough tokens to vote");
 
-            //record that voter has voted
-            votes[msg.sender][_category].voted = true;
-            votes[msg.sender][_category].voteChoice = _contestant;
+    for(uint256 i = 0; i < _contestant.length; i++) {
+        require(categorySet[_category[i]] == true, "Category not available for voting");
+        require(votes[msg.sender][_category[i]].voted == false, "already voted");
+        require(isContesting[_contestant[i]][_category[i]] == true, "address not a contestant");
 
-            //update candidate vote count
-            uint  voteCount =  contestantAddr[_contestant].voteCount += 1;
-            address contestant = contestantAddr[_contestant].addr = _contestant;
-            contestantAddr[_contestant].category = _category;
+        //record that voter has voted
+        votes[msg.sender][_category[i]].voted = true;
+        votes[msg.sender][_category[i]].voteChoice = _contestant[i];
 
-            votesList.push(_contestant);
+        //add vote to category vote count
+        categoryVoteCounts[_category[i]][_contestant[i]]++;
 
-            resultDetails.push(Result(_category, contestant, voteCount));
+        //add to list of votes
+        votesList.push(_contestant[i]);
 
-            emit Voted(_contestant, _category);
-
+        emit Voted(_contestant[i], _category[i]);
     }
 
+    // update contestant vote counts and addresses
+for (uint256 i = 0; i < _category.length; i++) {
+    string memory categori = _category[i];
+
+    uint256 highestVoteCount = 0;
+    address winningContestant;
+
+    for (uint256 j = 0; j < contestants.length; j++) {
+        address contestantAddress = contestants[j].addr;
+        if (isContesting[contestantAddress][categori] == true) {
+            uint256 voteCount = categoryVoteCounts[categori][contestantAddress];
+            if (voteCount > highestVoteCount) {
+                highestVoteCount = voteCount;
+                winningContestant = contestantAddress;
+            }
+        }
+    }
+
+    if (highestVoteCount > 0) {
+        contestantAddr[winningContestant].voteCount = highestVoteCount;
+        contestantAddr[winningContestant].addr = winningContestant;
+        contestantAddr[winningContestant].category = categori;
+    }
+    resultDetails.push(Result(categori, winningContestant, highestVoteCount));
+}
+  }
 
     /// @notice Function to compile results
-    function compileVotes() public onlyCompiler {
-        require(_electionStart != 0, "Election has not started yet");
-        require(_electionEnd != 0, "Election has not ended yet");
+     function compileVotes() public onlyCompiler {
         require(timeLeftToVote() <= 0, "Election is still ongoing");
+        require(hasCompiled == false, "Votes have already been compiled");
         uint len = resultDetails.length;
 
         address [] memory candidateId = new address[](len);
@@ -271,27 +287,19 @@ contract Election is Roles {
             candidateId[i] = resultDetails[i].contestantAddr;
             votesGotten[i] = resultDetails[i].contestantVoteCount;
             categoriesVoted[i] = resultDetails[i].contestantCategory;
-        }
-
-        candidatesCompiled = candidateId;
-        votesCompiled = votesGotten;
-        categoriesCompiled = categoriesVoted;
-
-        hasCompiled = true;
+        
+        compiledResultDetails.push(Result(categoriesVoted[i], candidateId[i], votesGotten[i]));
     }
-
+        hasCompiled = true;
+        isResultAnnounced = true;
+    
+}
 
     /// @notice making results public everywhere outside the contract as well
-    function makeResultsPublic() public onlyVoteCordinator returns(string[] memory, address[] memory, uint[] memory){
-        require(hasCompiled == true, "Results haven't been compiled");
-
-        categoriesResultCompiled = categoriesCompiled;
-        candidatesResultCompiled = candidatesCompiled;
-        votesResultCompiled = votesCompiled;
-        isResultAnnounced = true;
-        return (categoriesResultCompiled, candidatesResultCompiled, votesResultCompiled);
-    }
-
+    function makeResultsPublic() public onlyVoteCordinator view returns (Result[] memory) {
+    require(hasCompiled == true, "Votes have not been compiled yet");
+    return compiledResultDetails;
+}
 
 
 }

@@ -606,7 +606,7 @@ const handleReset = (e) => {
                   Announce the results
                 </Heading>
                 <Text color={'gray.500'}>
-                  The vote cordinator has the power to announce the results of the election compiled by teachers and board members.
+                  The vote cordinator has the power to announce the results of the election compiled by teachers or the vote cordinator.
                   {' '}
 
                 </Text>
