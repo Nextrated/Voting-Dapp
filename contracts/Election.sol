@@ -89,6 +89,7 @@ contract Election is Roles {
     /// @notice array for compiled results, that are private
     bool hasCompiled = false;
 
+    
  
     /// @notice function for setting the categories to be voted for the roles eligible to contest
     /// @param _category represents the category to be contested for
@@ -173,7 +174,6 @@ contract Election is Roles {
         }
         return (voteCategory, role);
     }
-
 
 
     /// @notice Function to declare interest for current leadership position set by the vote cordinator

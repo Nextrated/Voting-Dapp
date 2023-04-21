@@ -53,4 +53,5 @@ const ResultModal = ({ isOpen, onClose}) => {
   );
 };
 
-export default ResultModal;
+
+export default 	ResultModal;
