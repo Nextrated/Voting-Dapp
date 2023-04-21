@@ -13,7 +13,7 @@ const getSigner = async (ethereum) => {
     return provider.getSigner()
 }
 
-const getContract = async (ethereum) => {
+export const getContract = async (ethereum) => {
     const signer = await getSigner(ethereum)
 
     const contract = new ethers.Contract(contractAddress, abi, signer)
@@ -104,10 +104,10 @@ export const canStartContesting = async(ethereum) => {
     }
 }
 
-export const castVote = async(ethereum, candidate, category) => {
+export const castVote = async(ethereum, candidates, categories, categoryId) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.placeVote(candidate, category)
+        const txnResult = contract.placeVote(candidates, categories, categoryId)
         return txnResult;
     } catch(error) {
         console.log("Error: ", error)
@@ -137,7 +137,8 @@ export const getElectionCategory = async(ethereum) => {
 export const showInterest = async(contestantName,category,ethereum) => {
     try {
         const contract = await getContract(ethereum)
-        const txnResult = contract.expressInterest(contestantName,category);
+        const id = await contract.getCategoryId(category);
+        const txnResult = contract.expressInterest(contestantName,category,id);
         return txnResult;
     } catch(error) {
         console.log(error.message)
@@ -174,23 +175,12 @@ export const compileResults = async(ethereum) => {
     }
 }
 
-export const announceResults = async(ethereum) => {
-    try {
-        const contract = await getContract(ethereum)
-        const txnResult = contract.makeResultsPublic()
-        return txnResult;
-    } catch(error) {
-        console.log(error.message)
-    }
-}
 
-export const getPublicResults = async(ethereum) => {
+export const seePublicResults = async(ethereum) => {
     try {
         const contract = await getContract(ethereum)
-        const cand = contract.candidatesResultsCompiled();
-        const vote = contract.votesResultsCompiled();
-        const cat = contract.categoriesResultsCompiled();
-        return [cand,vote, cat];
+        const result = await contract.getPublicResults();
+        return result;
     } catch(error) {
         console.log(error.message)
     }

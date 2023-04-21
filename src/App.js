@@ -85,7 +85,7 @@ function App() {
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const contract =  new ethers.Contract(contractAddress, abi, signer);
-      const res= await contract.stakeholderExists(signer);  
+      const res= await contract.isStakeholder(signer);  
       const res1= await contract.isVoteCordinator(signer);
       res ? setIsStakeholder(true) : setIsStakeholder(false) 
       res1 ? setIsVoteCordinator(true) : setIsVoteCordinator(false);

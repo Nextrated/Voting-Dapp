@@ -89,6 +89,14 @@ contract Roles is ERC20, AccessControl {
         }
     }
 
+    function isStakeholder(address account) public view returns (bool) {
+        if (hasRole(TEACHER_ROLE, account) || hasRole(STUDENT_ROLE, account)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     modifier onlyAdmin() {
         require(isAdmin(msg.sender), "Restricted to Admin");
         _;

@@ -203,8 +203,9 @@ const Dashboard = ({ currentAccount }) => {
     } else {
       setCompiling(true);
       compileResults(window.ethereum)
-        .then(() => {
+        .then((res) => {
           setCompiling(false);
+          console.log("Votes compiled: ",res);
           toast({
             title: "Compilation successful",
             description: "Compiled results have been sent to the vote cordinator",

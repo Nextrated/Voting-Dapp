@@ -16,12 +16,12 @@ import {Modal,
   useToast,
   Divider,
 } from "@chakra-ui/react";
-import { getCandidates, castVote, getUserBalance } from "../utils";
+import { getCandidates, castVote, getUserBalance, getContract } from "../utils";
 
 const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
 	const [loading, setLoading] = useState(false);
 	const [candidates, setCandidates] = useState([])
-	const [choiceCandidateForRole, setChoiceCandidateForRole] = useState({choiceAddr:"",post:""})
+	const [choiceCandidateForRole, setChoiceCandidateForRole] = useState([])
 
   const toast = useToast();
 
@@ -38,7 +38,7 @@ const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
 	const submitVote = () => {
     setLoading(true)
 		console.log(choiceCandidateForRole)
-    castVote(window.ethereum, choiceCandidateForRole.choiceAddr, choiceCandidateForRole.post).then( ()=> {
+    castVote(window.ethereum, [choiceCandidateForRole.choiceAddr], [choiceCandidateForRole.post], [choiceCandidateForRole.categoryID]).then( ()=> {
       setLoading(false);
           resetBal(getBal)
             onClose();
@@ -118,7 +118,13 @@ const VoteModal = ({isOpen, onClose, roles, resetBal, currentAccount}) => {
                         <VStack spacing="15px">
                         {(candidates.filter(x=> x.category === role)).map((candidate,cid)=> 
                           (
-                            <Radio key={cid} value={candidate.addr} mb={3} onChange={ e => setChoiceCandidateForRole({choiceAddr:e.target.value,post:role}) }>{candidate.name} - {candidate.addr}</Radio> 
+                            <Radio key={cid} 
+                            value={candidate.addr} mb={3} 
+                            onChange={ async (e) =>{
+                              const contract = await getContract(window.ethereum);
+                              const categoryId = await contract.getCategoryId(role);
+                              setChoiceCandidateForRole({choiceAddr:e.target.value,post:role, categoryID: Number(categoryId)})
+                            }}>{candidate.name} - {candidate.addr}</Radio> 
                           )
                         )}
                         </VStack>
