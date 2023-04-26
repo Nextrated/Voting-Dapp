@@ -40,6 +40,14 @@ E.g Category:    SUG President              Category: Teaching Cordinator
 9. Stakeholders can view the results from their respective portals.
 10. Vote Administrator resets the details of election.
 
+Steps to use
+1. Clone Repository
+2. Run npm install to install dependencies
+3. Setup .env file with Testnet URL (Sepolia) and Private Key.
+4. Run npx hardhat run scripts/deploy.js to redeploy contract. 
+   //Deployer Address is Vote Cordinator
+5. Run npm start to load front end.
+
               
 
    

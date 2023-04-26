@@ -33,10 +33,6 @@ module.exports = {
       url: "https://polygon-mainnet.g.alchemy.com/v2/nAhiCHKvZkhkp4A7PkkCIBON0-BXW26d",
       //accounts: [process.env.privateKey]
     },
-    goerli: {
-      url: key,
-      accounts: [secret],
-    },
   },
   solidity: {
     version: "0.8.9",
