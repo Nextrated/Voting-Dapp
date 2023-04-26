@@ -85,7 +85,7 @@ const SetVotingAndTime = () => {
         const sendCategory = new ethers.Contract(contractAddress, abi, signer);
         const setCategoryTxn = await sendCategory.setVotingCategory(
           category,
-          parseInt(role)
+          parseInt(role),
         );
         await setCategoryTxn.wait();
         setSubmitted("successful!");
@@ -244,7 +244,7 @@ const SetVotingAndTime = () => {
     onClose: onResetClose,
   } = useDisclosure();
 
-  const resetElectionCategory = async (category) => {
+  const resetElectionCategory = async () => {
     try {
       const { ethereum } = window;
       if (ethereum) {
@@ -255,7 +255,11 @@ const SetVotingAndTime = () => {
           abi,
           signer
         );
-        const resetElectionTxn = await resetElectionContract.resetElection();
+        const resetElectionTxn = await resetElectionContract.resetElection(
+          {gasLimit: 10000000,
+            nonce: undefined
+          }
+        );
         await resetElectionTxn.wait();
         setSubmitted("successful!");
         setResetElection("");
@@ -286,6 +290,7 @@ const SetVotingAndTime = () => {
       console.log(error);
     }
   };
+
 
   const handleReset = (e) => {
     e.preventDefault();
@@ -587,7 +592,6 @@ const SetVotingAndTime = () => {
               <ModalBody pb={6}>
                 <form action="" onSubmit={handleReset}>
                   <FormLabel> Reset Election</FormLabel>
-                  {/* <Input type="text" onChange={e => setResetElection(e.target.value)} min="0" placeholder='Enter category' required/> */}
                   <ModalFooter>
                     {isReset === false ? (
                       <Button colorScheme="blue" mr={3} type="submit">
@@ -612,20 +616,6 @@ const SetVotingAndTime = () => {
           </Modal>
         </GridItem>
       </Grid>
-
-      <div>
-        <p>
-          {" "}
-          <strong>Category:</strong> {currentCategory.category[0]}
-        </p>
-        <p>
-          {" "}
-          <strong>Role Eligible to Contest : </strong> {currentCategory.role}
-        </p>
-        <div>
-          <strong />
-        </div>
-      </div>
     </Box>
   );
 };

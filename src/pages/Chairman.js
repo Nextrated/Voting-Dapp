@@ -17,9 +17,7 @@ import {
   ModalCloseButton,
   useDisclosure,
   Radio,
-  Image,
   RadioGroup,
-  Center,
   Heading,
   Stack,
   useColorModeValue,
@@ -30,6 +28,7 @@ import {
   StarIcon,
   TimeIcon,
   WarningTwoIcon,
+  DeleteIcon
 } from "@chakra-ui/icons";
 
 import { Link } from "react-router-dom";
@@ -42,7 +41,6 @@ import abi from "../contracts/abi.json";
 const Chairman = () => {
   const [addDelegateAddress, setAddDelegateAddress] = useState("");
   const [removeDelegateAddress, setRemoveDelegateAddress] = useState("");
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [submitted, setSubmitted] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isTokenSent, setIsTokenSent] = useState(false);
@@ -62,6 +60,12 @@ const Chairman = () => {
     isOpen: isAddStakeholderOpen,
     onOpen: onAddStakeholderOpen,
     onClose: onAddStakeholderClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isRemoveStakeholderOpen,
+    onOpen: onRemoveStakeholderOpen,
+    onClose: onRemoveStakeholderClose,
   } = useDisclosure();
 
   const {
@@ -91,6 +95,7 @@ const Chairman = () => {
       isClosable: true,
     });
   };
+  
   const addStakeholder = async (name, address, stakeholder) => {
     try {
       const { ethereum } = window;
@@ -138,11 +143,70 @@ const Chairman = () => {
     }
   };
 
+  const deleteStakeholder = async () => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const deleteElectionContract = new ethers.Contract(
+          contractAddress,
+          abi,
+          signer
+        );
+        const deleteElectionTxn = await deleteElectionContract.removeStakeholder(address,
+          {gasLimit: 10000000,
+            nonce: undefined
+          }
+        );
+        await deleteElectionTxn.wait();
+        setSubmitted("stakeholder deleted successfully!");
+        setIsSubmitted(false);
+
+        setTimeout(() => {
+          setSubmitted("");
+          onRemoveStakeholderClose();
+          toast({
+            title: "Successfull",
+            description: `Stakeholder removed successfully`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+        }, 1000);
+      } else {
+        onRemoveStakeholderClose();
+        setIsSubmitted(false);
+        setSubmitted("");
+        showErrorToast("Please ensure you are connected to metamask");
+        console.log("ethereum object does not exist!");
+      }
+    } catch (error) {
+      onRemoveStakeholderClose();
+      setIsSubmitted(false);
+      setSubmitted("");
+      showErrorToast("An unexpected error occured");
+      console.log(error);
+    }
+  };
+
   const addStakeholders = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
     addStakeholder(name, address, stakeholder);
+    setName("");
+    setAddress("");
+    setStakeholder("");
   };
+
+  const deleteStakeholders = (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    deleteStakeholder(address);
+    setAddress("");
+  };
+
+
   const addDelegate = async (address) => {
     try {
       const { ethereum } = window;
@@ -252,7 +316,6 @@ const Chairman = () => {
         await sendTokenTxn.wait();
         setSubmitted("successful!");
         setIsTokenSent(false);
-        setAddDelegateAddress("");
 
         setTimeout(() => {
           setSubmitted("");
@@ -299,7 +362,6 @@ const Chairman = () => {
         await sendTokenTxn.wait();
         setSubmitted("successful!");
         setIsTokenSent1(false);
-        setAddDelegateAddress("");
 
         setTimeout(() => {
           setSubmitted("");
@@ -333,24 +395,28 @@ const Chairman = () => {
     e.preventDefault();
     setIsSubmitted(true);
     addDelegate(addDelegateAddress);
+    setAddDelegateAddress("");
   };
 
   const handleRemoveDelegate = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
     removeDelegate(removeDelegateAddress);
+    setRemoveDelegateAddress("");
   };
 
   const handleSendTokensToStudents = (e) => {
     e.preventDefault();
     setIsTokenSent(true);
     sendTokensToStudents(studentAmount);
+    setStudentAmount("");
   };
 
   const handleSendTokensToTeachers = (e) => {
     e.preventDefault();
     setIsTokenSent1(true);
     sendTokensToTeachers(teacherAmount);
+    setTeacherAmount("");
   };
 
   return (
@@ -464,6 +530,79 @@ const Chairman = () => {
           </Modal>
         </GridItem>
         <GridItem>
+        <Box onClick={onRemoveStakeholderOpen} cursor="pointer">
+            <Box
+              maxW={"445px"}
+              h="250"
+              w={"full"}
+              bg={useColorModeValue("white", "grey.900")}
+              boxShadow={"2xl"}
+              rounded={"md"}
+              p={6}
+              overflow={"hidden"}
+            >
+              <DeleteIcon fontSize="3xl" mb="5" color="purple" />
+              <Stack>
+                <Heading
+                  color={useColorModeValue("gray.700", "white")}
+                  fontSize={"2xl"}
+                >
+                  Remove Stakeholders
+                </Heading>
+                <Text color={"gray.500"}>
+                  The vote cordinator has the power to remove stakeholders from the system {" "}
+                </Text>
+              </Stack>
+            </Box>
+          </Box>
+           <Modal
+            initialFocusRef={initialRef}
+            finalFocusRef={finalRef}
+            isOpen={isRemoveStakeholderOpen}
+            onClose={onRemoveStakeholderClose}
+          >
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>Remove a stakeholder</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody pb={6}>
+                <form onSubmit={deleteStakeholders}>
+                  <FormLabel>Address of stakeholder</FormLabel>
+                  <Input
+                    ref={initialRef}
+                    placeholder="Enter address"
+                    mb="4"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+                  <ModalFooter>
+                    <Text mr={2} color={"green.500"}>
+                      {submitted}
+                    </Text>
+                    {isSubmitted === false ? (
+                      <Button colorScheme="blue" mr={3} type="submit">
+                        Delete
+                      </Button>
+                    ) : (
+                      <Button
+                        colorScheme="blue"
+                        mr={3}
+                        type="submit"
+                        isLoading
+                        loadingText="Deleting"
+                      >
+                        Deleting
+                      </Button>
+                    )}
+                    <Button onClick={onRemoveStakeholderClose}>Cancel</Button>
+                  </ModalFooter>
+                </form>
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+        </GridItem>
+        <GridItem>
           <Link to="/setvote">
             <Box cursor="pointer">
               <Box
@@ -562,7 +701,6 @@ const Chairman = () => {
                           Sending Tokens
                         </Button>
                       )}
-                      <Button onClick={onDispatchTokenClose}>Cancel</Button>
                     </ModalFooter>
                   </form>
 
